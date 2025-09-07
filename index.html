@@ -97,15 +97,6 @@
       `;
 
       var marker = L.marker(p.coords).bindPopup(popupContent);
-
-      // Popup openen bij hover
-      marker.on('mouseover', function () {
-        this.openPopup();
-      });
-      marker.on('mouseout', function () {
-        this.closePopup();
-      });
-
       marker.addTo(map);
       markerGroups[p.cat].push(marker);
     });
@@ -124,3 +115,4 @@
   </script>
 </body>
 </html>
+
