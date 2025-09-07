@@ -306,9 +306,21 @@ document.querySelectorAll('.filters input[type=checkbox]').forEach(cb => {
     } else {
       activeCategories = activeCategories.filter(c => c !== cat);
     }
+
+    // Vorige selectie resetten
+    if (activeMarker) {
+      activeMarker.setIcon(defaultIcon);
+      activeMarker = null;
+    }
+    if (activeItem) {
+      activeItem.style.backgroundColor = "white";
+      activeItem = null;
+    }
+
     renderPlaces();
   });
 });
+
 
 document.getElementById("search").addEventListener("input", e => {
   searchQuery = e.target.value;
@@ -341,6 +353,7 @@ document.getElementById("reset").addEventListener("click", () => {
   
 </body>
 </html>
+
 
 
 
