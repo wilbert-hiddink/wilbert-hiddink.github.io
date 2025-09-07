@@ -41,15 +41,36 @@
       border: 1px solid #aaa;
       border-radius: 4px;
     }
+    .reset-btn {
+      margin-top: 10px;
+      padding: 6px 10px;
+      font-size: 14px;
+      background: #0078d7;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .reset-btn:hover {
+      background: #005fa3;
+    }
     #map {
       flex: 1;
     }
-    #list {
-      padding: 15px;
+    #list-container {
+      margin-left: 220px; /* zelfde breedte als filters */
       border-top: 1px solid #ccc;
+      background: #fafafa;
+      padding: 15px;
+    }
+    #list-count {
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    #list {
       max-height: 300px;
       overflow-y: auto;
-      background: #fafafa;
     }
     .place-item {
       padding: 10px;
@@ -89,6 +110,9 @@
       <div class="search-box">
         <input type="text" id="search" placeholder="Zoek op naam of beschrijving...">
       </div>
+
+      <!-- Resetknop -->
+      <button id="reset" class="reset-btn">Toon alles</button>
     </div>
 
     <!-- Map -->
@@ -96,7 +120,10 @@
   </div>
 
   <!-- Lijst onder de kaart -->
-  <div id="list"></div>
+  <div id="list-container">
+    <div id="list-count">0 plekken gevonden</div>
+    <div id="list"></div>
+  </div>
 
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -152,7 +179,10 @@
     // 🔹 Renderfunctie voor kaart + lijst
     function renderPlaces() {
       var listDiv = document.getElementById("list");
+      var countDiv = document.getElementById("list-count");
       listDiv.innerHTML = "";
+
+      let visibleCount = 0;
 
       allPlaces.forEach(place => {
         let cat = place.data.cat || "";
@@ -174,6 +204,7 @@
 
         // Anders → tonen
         place.marker.addTo(map);
+        visibleCount++;
 
         var item = document.createElement("div");
         item.className = "place-item";
@@ -193,6 +224,9 @@
 
         listDiv.appendChild(item);
       });
+
+      // Telling bijwerken
+      countDiv.textContent = visibleCount + " plek" + (visibleCount === 1 ? "" : "ken") + " gevonden";
     }
 
     // 🔹 Filters koppelen
@@ -200,7 +234,9 @@
       cb.addEventListener('change', () => {
         let cat = cb.value;
         if (cb.checked) {
-          activeCategories.push(cat);
+          if (!activeCategories.includes(cat)) {
+            activeCategories.push(cat);
+          }
         } else {
           activeCategories = activeCategories.filter(c => c !== cat);
         }
@@ -213,10 +249,23 @@
       searchQuery = e.target.value;
       renderPlaces();
     });
+
+    // 🔹 Resetknop koppelen
+    document.getElementById("reset").addEventListener("click", () => {
+      // Alles aanvinken
+      activeCategories = ["camper", "eten", "natuur"];
+      document.querySelectorAll('.filters input[type=checkbox]').forEach(cb => cb.checked = true);
+
+      // Zoekveld leegmaken
+      searchQuery = "";
+      document.getElementById("search").value = "";
+
+      // Alles opnieuw tonen
+      renderPlaces();
+    });
   </script>
 </body>
 </html>
-
 
 
 
