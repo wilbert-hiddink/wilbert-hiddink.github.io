@@ -47,19 +47,16 @@
     }
     .reset-btn:hover { background: #005fa3; }
 
-    /* Container voor kaart en lijst naast elkaar */
     .main {
       flex: 1;
       display: flex;
-      min-height: 0; /* belangrijk voor flex scroll */
+      min-height: 0;
     }
 
-    #map {
-      flex: 1;
-    }
+    #map { flex: 1; }
 
     #list-container {
-      width: 500px;
+      width: 400px;
       border-left: 1px solid #ccc;
       background: #fafafa;
       display: flex;
@@ -95,7 +92,6 @@
 <body>
   <h2>Kaart met interessante plekken 🚐</h2>
 
-  <!-- Filters boven -->
   <div class="filters">
     <label><input type="checkbox" value="camper" checked> Camperplaatsen</label>
     <label><input type="checkbox" value="eten" checked> Restaurants</label>
@@ -108,7 +104,6 @@
     <button id="reset" class="reset-btn">Toon alles</button>
   </div>
 
-  <!-- Kaart links + lijst rechts -->
   <div class="main">
     <div id="map"></div>
     <div id="list-container">
@@ -117,9 +112,7 @@
     </div>
   </div>
 
-  <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <!-- PapaParse JS -->
   <script src="https://unpkg.com/papaparse@5.3.2/papaparse.min.js"></script>
 
   <script>
@@ -206,6 +199,20 @@
       });
 
       countDiv.textContent = visibleCount + " plek" + (visibleCount === 1 ? "" : "ken") + " gevonden";
+
+      // ⬇️ Na elk renderen automatisch uitzoomen naar alle zichtbare markers
+      zoomToAll();
+    }
+
+    function zoomToAll() {
+      let visibleMarkers = allPlaces
+        .filter(place => map.hasLayer(place.marker))
+        .map(place => place.marker.getLatLng());
+
+      if (visibleMarkers.length > 0) {
+        var bounds = L.latLngBounds(visibleMarkers);
+        map.fitBounds(bounds, { padding: [40, 40] });
+      }
     }
 
     document.querySelectorAll('.filters input[type=checkbox]').forEach(cb => {
