@@ -2,6 +2,136 @@
 <html lang="nl">
 <head>
   <meta charset="utf-8" />
+  <title>Kaart met CSV-plekken</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    h2 {
+      padding: 10px;
+    }
+    .container {
+      display: flex;
+      height: calc(100vh - 60px);
+    }
+    .filters {
+      width: 200px;
+      padding: 15px;
+      background: #f7f7f7;
+      border-right: 1px solid #ccc;
+    }
+    .filters label {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+    #map {
+      flex: 1;
+    }
+    .popup-content h3 {
+      margin: 0 0 5px;
+      font-size: 16px;
+    }
+    .popup-content img {
+      margin-top: 5px;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Kaart met interessante plekken 🚐</h2>
+
+  <div class="container">
+    <!-- Filter menu -->
+    <div class="filters">
+      <h3>Filters</h3>
+      <label><input type="checkbox" value="camper" checked> Camperplaatsen</label>
+      <label><input type="checkbox" value="eten" checked> Restaurants</label>
+      <label><input type="checkbox" value="natuur" checked> Natuur</label>
+    </div>
+
+    <!-- Map -->
+    <div id="map"></div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <!-- PapaParse JS -->
+  <script src="https://unpkg.com/papaparse@5.3.2/papaparse.min.js"></script>
+
+  <script>
+    // Kaart starten
+    var map = L.map('map').setView([52.1, 5.3], 7);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    // Marker-groepen
+    var markerGroups = {
+      camper: [],
+      eten: [],
+      natuur: []
+    };
+
+    // CSV inladen (plekken.csv moet in dezelfde map staan als index.html)
+    Papa.parse("plekken.csv", {
+      download: true,
+      header: true,
+      complete: function(results) {
+        results.data.forEach(p => {
+          if (!p.lat || !p.lon) return; // skip lege rijen
+
+          var popupContent = `
+            <div class="popup-content">
+              <h3>${p.name}</h3>
+              <p><strong>Categorie:</strong> ${p.cat}</p>
+              <p>${p.desc}</p>
+              <a href="${p.link}" target="_blank">Meer info</a><br>
+              <img src="${p.img}" width="150">
+            </div>
+          `;
+
+          var marker = L.marker([p.lat, p.lon]).bindPopup(popupContent);
+          marker.addTo(map);
+          markerGroups[p.cat]?.push(marker);
+        });
+      }
+    });
+
+    // Filterfunctie
+    document.querySelectorAll('.filters input').forEach(cb => {
+      cb.addEventListener('change', () => {
+        let cat = cb.value;
+        if (cb.checked) {
+          markerGroups[cat].forEach(m => m.addTo(map));
+        } else {
+          markerGroups[cat].forEach(m => map.removeLayer(m));
+        }
+      });
+    });
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+<!-- oude werkende versie
+
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
   <title>Mijn Leaflet Kaart</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -138,3 +268,4 @@
 </body>
 </html>
 
+-->
