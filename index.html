@@ -44,7 +44,7 @@ h2 { padding: 10px; margin: 0; }
   gap: 10px;
   margin-top: 5px;
 }
-.search-box input, #place, #radius {
+.search-box input, #place {
   padding: 6px;
   font-size: 14px;
   border: 1px solid #aaa;
@@ -52,7 +52,6 @@ h2 { padding: 10px; margin: 0; }
 }
 .search-box input { flex:1; min-width:150px; }
 #place { flex:1; min-width:150px; }
-#radius { width:80px; }
 .reset-btn {
   padding: 6px 10px;
   font-size: 14px;
@@ -137,11 +136,10 @@ h2 { padding: 10px; margin: 0; }
     <button id="reset" class="reset-btn">Toon alles</button>
   </div>
 
-  <!-- Plaats + straal -->
+  <!-- Plaats zoeken -->
   <div class="filter-actions" style="margin-top:5px; gap:10px;">
     <label for="place" style="font-size:14px;">Zoek in de omgeving van:</label>
     <input type="text" id="place" placeholder="Plaatsnaam">
-    <input type="number" id="radius" placeholder="Straal km">
     <button id="goPlace" class="reset-btn">Ga</button>
   </div>
 </div>
@@ -316,7 +314,6 @@ document.getElementById("reset").addEventListener("click", () => {
   searchQuery = "";
   document.getElementById("search").value = "";
   document.getElementById("place").value = "";
-  document.getElementById("radius").value = "";
   if (activeMarker) { activeMarker.setIcon(defaultIcon); activeMarker = null; }
   if (activeItem) { activeItem.style.backgroundColor = "white"; activeItem = null; }
   renderPlaces();
@@ -334,7 +331,7 @@ function distanceKm(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
-// Plaats + straal zoekfunctie
+// Plaats zoeken met vaste zoom 25 km
 document.getElementById("goPlace").addEventListener("click", () => {
   const placeName = document.getElementById("place").value.trim();
   if (!placeName) { alert("Vul een plaatsnaam in"); return; }
@@ -347,18 +344,17 @@ document.getElementById("goPlace").addEventListener("click", () => {
       const lat = parseFloat(data[0].lat);
       const lon = parseFloat(data[0].lon);
 
-      // Vast zoomniveau ~50 km
-      const radius = 50; // km
-      const latDiff = radius / 111; // 1 graad ≈ 111 km
+      // Vast zoomgebied 25 km
+      const radius = 25;
+      const latDiff = radius / 111;
       const lonDiff = radius / (111 * Math.cos(lat * Math.PI/180));
-
       const bounds = [
         [lat - latDiff, lon - lonDiff],
         [lat + latDiff, lon + lonDiff]
       ];
       map.fitBounds(bounds, { padding: [20,20] });
 
-      // Filter markers binnen deze 50 km
+      // Filter markers binnen 25 km
       allPlaces.forEach(place => {
         const d = distanceKm(lat, lon, place.lat, place.lon);
         const item = document.getElementById("place-" + place.index);
@@ -384,4 +380,3 @@ map.on("moveend", filterListByMapBounds);
 </script>
 </body>
 </html>
-
