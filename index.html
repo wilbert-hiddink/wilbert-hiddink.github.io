@@ -8,12 +8,31 @@
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
   <style>
-    #map {
-      height: 500px;
-      width: 100%;
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    h2 {
+      padding: 10px;
+    }
+    .container {
+      display: flex;
+      height: calc(100vh - 60px); /* schermhoogte - titel */
     }
     .filters {
-      margin: 10px;
+      width: 200px;
+      padding: 15px;
+      background: #f7f7f7;
+      border-right: 1px solid #ccc;
+    }
+    .filters label {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+    #map {
+      flex: 1;
     }
     .popup-content h3 {
       margin: 0 0 5px;
@@ -28,15 +47,18 @@
 <body>
   <h2>Kaart met interessante plekken 🚐</h2>
 
-  <!-- Filter menu -->
-  <div class="filters">
-    <label><input type="checkbox" value="camper" checked> Camperplaatsen</label>
-    <label><input type="checkbox" value="eten" checked> Restaurants</label>
-    <label><input type="checkbox" value="natuur" checked> Natuur</label>
-  </div>
+  <div class="container">
+    <!-- Filter menu -->
+    <div class="filters">
+      <h3>Filters</h3>
+      <label><input type="checkbox" value="camper" checked> Camperplaatsen</label>
+      <label><input type="checkbox" value="eten" checked> Restaurants</label>
+      <label><input type="checkbox" value="natuur" checked> Natuur</label>
+    </div>
 
-  <!-- Map -->
-  <div id="map"></div>
+    <!-- Map -->
+    <div id="map"></div>
+  </div>
 
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -78,7 +100,6 @@
       }
     ];
 
-
     // Markers opslaan per categorie
     var markerGroups = {
       camper: [],
@@ -116,5 +137,4 @@
   </script>
 </body>
 </html>
-
 
