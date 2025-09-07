@@ -34,6 +34,7 @@ h2 { padding: 10px; margin: 0; }
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  align-items: center;
 }
 .filters label { font-size: 14px; }
 
@@ -129,11 +130,11 @@ h2 { padding: 10px; margin: 0; }
   </div>
 
   <!-- Categorie-checkboxes + Toon alles knop naast elkaar -->
-  <div class="filter-cats" style="display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:5px;">
+  <div class="filter-cats">
     <label><input type="checkbox" value="camper" checked> Camperplaatsen</label>
     <label><input type="checkbox" value="eten" checked> Restaurants</label>
     <label><input type="checkbox" value="natuur" checked> Natuur</label>
-    <button id="reset" class="reset-btn" style="margin-left:10px;">Toon alles</button>
+    <button id="reset" class="reset-btn">Toon alles</button>
   </div>
 
   <!-- Plaats + straal -->
@@ -333,7 +334,7 @@ document.getElementById("reset").addEventListener("click", () => {
   renderPlaces();
 });
 
-// Plaats + straal
+// Plaats + straal (precies passend)
 function distanceKm(lat1, lon1, lat2, lon2) {
   const R = 6371;
   const dLat = (lat2-lat1) * Math.PI/180;
@@ -358,11 +359,9 @@ document.getElementById("goPlace").addEventListener("click", () => {
       const lat = parseFloat(loc.lat);
       const lon = parseFloat(loc.lon);
 
-      // Bereken bounds zodat straal zichtbaar is
-      const latDiff = radius / 111;
-      const lonDiff = radius / (111 * Math.cos(lat * Math.PI/180));
-      const bounds = L.latLngBounds([lat-latDiff, lon-lonDiff], [lat+latDiff, lon+lonDiff]);
-      map.fitBounds(bounds);
+      // Cirkel voor precieze straal
+      const circle = L.circle([lat, lon], { radius: radius * 1000 });
+      map.fitBounds(circle.getBounds(), { padding: [20,20] });
 
       allPlaces.forEach(place => {
         const d = distanceKm(lat, lon, place.lat, place.lon);
@@ -387,5 +386,3 @@ map.on("moveend", filterListByMapBounds);
 </script>
 </body>
 </html>
-
-
