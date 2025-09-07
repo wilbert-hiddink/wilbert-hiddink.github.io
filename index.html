@@ -15,6 +15,14 @@
     .filters {
       margin: 10px;
     }
+    .popup-content h3 {
+      margin: 0 0 5px;
+      font-size: 16px;
+    }
+    .popup-content img {
+      margin-top: 5px;
+      border-radius: 6px;
+    }
   </style>
 </head>
 <body>
@@ -42,11 +50,32 @@
       attribution: '© OpenStreetMap'
     }).addTo(map);
 
-    // Plekken met categorie
+    // Plekken met categorie en extra info
     var plekken = [
-      { coords: [52.3702, 4.8952], cat: 'camper', name: 'Camperplaats Amsterdam' },
-      { coords: [51.9244, 4.4777], cat: 'eten', name: 'Restaurant Rotterdam' },
-      { coords: [52.0907, 5.1214], cat: 'natuur', name: 'Natuur Utrecht' }
+      { 
+        coords: [52.3702, 4.8952], 
+        cat: 'camper', 
+        name: 'Camperplaats Amsterdam',
+        desc: 'Een centrale plek om met je camper te overnachten.',
+        link: 'https://example.com/amsterdam',
+        img: 'https://via.placeholder.com/150'
+      },
+      { 
+        coords: [51.9244, 4.4777], 
+        cat: 'eten', 
+        name: 'Restaurant Rotterdam',
+        desc: 'Gezellig restaurant in het hart van Rotterdam.',
+        link: 'https://example.com/rotterdam',
+        img: 'https://via.placeholder.com/150'
+      },
+      { 
+        coords: [52.0907, 5.1214], 
+        cat: 'natuur', 
+        name: 'Natuur Utrecht',
+        desc: 'Mooie wandelroutes en natuurgebieden in Utrecht.',
+        link: 'https://example.com/utrecht',
+        img: 'https://via.placeholder.com/150'
+      }
     ];
 
     // Markers opslaan per categorie
@@ -57,7 +86,26 @@
     };
 
     plekken.forEach(p => {
-      var marker = L.marker(p.coords).bindPopup(p.name);
+      var popupContent = `
+        <div class="popup-content">
+          <h3>${p.name}</h3>
+          <p><strong>Categorie:</strong> ${p.cat}</p>
+          <p>${p.desc}</p>
+          <a href="${p.link}" target="_blank">Meer info</a><br>
+          <img src="${p.img}" width="150">
+        </div>
+      `;
+
+      var marker = L.marker(p.coords).bindPopup(popupContent);
+
+      // Popup openen bij hover
+      marker.on('mouseover', function () {
+        this.openPopup();
+      });
+      marker.on('mouseout', function () {
+        this.closePopup();
+      });
+
       marker.addTo(map);
       markerGroups[p.cat].push(marker);
     });
