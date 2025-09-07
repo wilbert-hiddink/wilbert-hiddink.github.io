@@ -246,7 +246,6 @@ function renderPlaces() {
   });
 
   countDiv.textContent = visibleCount + " plek" + (visibleCount === 1 ? "" : "ken") + " gevonden";
-  zoomToAll();
   filterListByMapBounds();
 }
 
@@ -261,14 +260,6 @@ function selectPlace(place) {
   if (activeItem) {
     activeItem.style.backgroundColor = "#fffa90";
     activeItem.scrollIntoView({ behavior: "smooth", block: "center" });
-  }
-}
-
-function zoomToAll() {
-  let visibleMarkers = allPlaces.filter(p => map.hasLayer(p.marker)).map(p => p.marker.getLatLng());
-  if (visibleMarkers.length > 0) {
-    var bounds = L.latLngBounds(visibleMarkers);
-    map.fitBounds(bounds, { padding: [40, 40] });
   }
 }
 
@@ -331,7 +322,7 @@ function distanceKm(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
-// Plaats zoeken met vaste zoom 25 km
+// Plaats zoeken: alleen kaart verplaatsen, lijst blijft zoals hij is
 document.getElementById("goPlace").addEventListener("click", () => {
   const placeName = document.getElementById("place").value.trim();
   if (!placeName) { alert("Vul een plaatsnaam in"); return; }
@@ -344,33 +335,8 @@ document.getElementById("goPlace").addEventListener("click", () => {
       const lat = parseFloat(data[0].lat);
       const lon = parseFloat(data[0].lon);
 
-      // Vast zoomgebied 25 km
-      const radius = 25;
-      const latDiff = radius / 111;
-      const lonDiff = radius / (111 * Math.cos(lat * Math.PI/180));
-      const bounds = [
-        [lat - latDiff, lon - lonDiff],
-        [lat + latDiff, lon + lonDiff]
-      ];
-      map.fitBounds(bounds, { padding: [20,20] });
-
-      // Filter markers binnen 25 km
-      allPlaces.forEach(place => {
-        const d = distanceKm(lat, lon, place.lat, place.lon);
-        const item = document.getElementById("place-" + place.index);
-        if (d <= radius && activeCategories.includes(place.data.cat)) {
-          place.marker.addTo(map);
-          if (item) item.style.display = "block";
-        } else {
-          map.removeLayer(place.marker);
-          if (item) item.style.display = "none";
-        }
-      });
-
-      // Update telling
-      const visibleCount = Array.from(document.querySelectorAll(".place-item"))
-        .filter(item => item.style.display !== "none").length;
-      document.getElementById("list-count").textContent = visibleCount + " plek" + (visibleCount===1?"":"ken")+ " gevonden";
+      // Alleen kaart verplaatsen en inzoomen
+      map.setView([lat, lon], 12); // Vast zoomniveau, kan aangepast worden
     })
     .catch(err => { console.error(err); alert("Fout bij ophalen locatie"); });
 });
