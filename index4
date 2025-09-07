@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <title>Kaart met CSV-plekken</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    h2 { padding: 10px; margin: 0; }
+
+    /* 🔹 Filters bovenaan sticky */
+    .filters {
+      position: sticky;
+      top: 0;
+      background: #f7f7f7;
+      border-bottom: 1px solid #ccc;
+      padding: 10px 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      z-index: 1000;
+    }
+
+    /* Categorie-checkboxes */
+    .filter-cats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .filters label { font-size: 14px; }
+
+    /* Zoek en reset onder de filters */
+    .filter-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 5px;
+    }
+    .search-box input {
+      padding: 6px;
+      font-size: 14px;
+      border: 1px solid #aaa;
+      border-radius: 4px;
+      flex: 1;
+      min-width: 150px;
+    }
+    .reset-btn {
+      padding: 6px 10px;
+      font-size: 14px;
+      background: #0078d7;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .reset-btn:hover { background: #005fa3; }
+
+    /* Container kaart + lijst */
+    .main {
+      flex: 1;
+      display: flex;
+      min-height: 0;
+      gap: 1px;
+    }
+
+    #map { flex: 1; }
+
+    #list-container {
+      width: 400px;
+      border-left: 1px solid #ccc;
+      background: #fafafa;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #list-count {
+      font-weight: bold;
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    #list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+    }
+
+    .place-item {
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: white;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .place-item:hover { background: #f0f8ff; }
+    .place-item h4 { margin: 0 0 5px; font-size: 16px; }
+    .place-item img { max-width: 100%; border-radius: 6px; margin-top: 5px; }
+
+    /* RESPONSIVE: mobiel */
+    @media (max-width: 900px) {
+      .main {
+        flex-direction: column;
+      }
+      #list-container {
+        width: 100%;
+        border-left: none;
+        border-top: 1px solid #ccc;
+        height: 40vh;
+        flex-shrink: 0;
+      }
+      #map {
+        height: 60vh;
+        flex: none;
+      }
+    }
+
+    @media (max-width: 500px) {
+      #list-container { height: 50vh; }
+      #map { height: 50vh; }
+    }
+  </style>
+</head>
+<body>
+  <h2>Kaart met interessante plekken 🚐</h2>
+
+  <div class="filters">
+    <div class="filter-cats">
+      <label><input type="checkbox" value="camper" checked> Camperplaatsen</label>
+      <label><input type="checkbox" value="eten" checked> Restaurants</label>
+      <label><input type="checkbox" value="natuur" checked> Natuur</label>
+    </div>
+    <div class="filter-actions">
+      <div class="search-box">
+        <input type="text" id="search" placeholder="Zoek op naam of beschrijving...">
+      </div>
+      <button id="reset" class="reset-btn">Toon alles</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div id="map"></div>
+    <div id="list-container">
+      <div id="list-count">0 plekken gevonden</div>
+      <div id="list"></div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/papaparse@5.3.2/papaparse.min.js"></script>
+
+  
+  <script>
+    var map = L.map('map').setView([52.1, 5.3], 7);
+  
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
+  
+    var allPlaces = [];
+    var activeCategories = ["camper", "eten", "natuur"];
+    var searchQuery = "";
+  
+    Papa.parse("plekken.csv", {
+      download: true,
+      header: true,
+      complete: function(results) {
+        results.data.forEach((p, index) => {
+          var lat = parseFloat(p.lat);
+          var lon = parseFloat(p.lon);
+          if (isNaN(lat) || isNaN(lon)) return;
+  
+          var marker = L.marker([lat, lon]);
+  
+          allPlaces.push({ data: p, marker: marker, lat: lat, lon: lon, index: index });
+        });
+  
+        renderPlaces();
+      }
+    });
+  
+    function renderPlaces() {
+      var listDiv = document.getElementById("list");
+      var countDiv = document.getElementById("list-count");
+      listDiv.innerHTML = "";
+      let visibleCount = 0;
+  
+      allPlaces.forEach(place => {
+        let cat = place.data.cat || "";
+        let name = place.data.name || "";
+        let desc = place.data.desc || "";
+  
+        if (!activeCategories.includes(cat)) {
+          map.removeLayer(place.marker);
+          return;
+        }
+  
+        let searchText = (name + " " + desc).toLowerCase();
+        if (searchQuery && !searchText.includes(searchQuery.toLowerCase())) {
+          map.removeLayer(place.marker);
+          return;
+        }
+  
+        place.marker.addTo(map);
+        visibleCount++;
+  
+        var item = document.createElement("div");
+        item.className = "place-item";
+        item.id = "place-" + place.index;
+        item.innerHTML = `
+          <h4>${name}</h4>
+          <p><em>${cat}</em></p>
+          <p>${desc}</p>
+          <a href="${place.data.link}" target="_blank">Website</a><br>
+          ${place.data.img ? `<img src="${place.data.img}" alt="${name}">` : ""}
+        `;
+  
+        item.addEventListener("click", () => {
+          map.setView([place.lat, place.lon], 12);
+          // Marker effect optioneel: bijvoorbeeld bounce (kan Leaflet plugin) of andere styling
+        });
+  
+        listDiv.appendChild(item);
+  
+        // Marker click → scroll naar lijst-item en markeren
+        place.marker.on("click", () => {
+          var el = document.getElementById("place-" + place.index);
+          if (el) {
+            // scrollen
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+            // tijdelijke highlight
+            el.style.backgroundColor = "#fffa90";
+            setTimeout(() => { el.style.backgroundColor = "white"; }, 1500);
+          }
+        });
+      });
+  
+      countDiv.textContent = visibleCount + " plek" + (visibleCount === 1 ? "" : "ken") + " gevonden";
+  
+      zoomToAll();
+    }
+  
+    function zoomToAll() {
+      let visibleMarkers = allPlaces
+        .filter(place => map.hasLayer(place.marker))
+        .map(place => place.marker.getLatLng());
+  
+      if (visibleMarkers.length > 0) {
+        var bounds = L.latLngBounds(visibleMarkers);
+        map.fitBounds(bounds, { padding: [40, 40] });
+      }
+    }
+  
+    document.querySelectorAll('.filters input[type=checkbox]').forEach(cb => {
+      cb.addEventListener('change', () => {
+        let cat = cb.value;
+        if (cb.checked) {
+          if (!activeCategories.includes(cat)) activeCategories.push(cat);
+        } else {
+          activeCategories = activeCategories.filter(c => c !== cat);
+        }
+        renderPlaces();
+      });
+    });
+  
+    document.getElementById("search").addEventListener("input", e => {
+      searchQuery = e.target.value;
+      renderPlaces();
+    });
+  
+    document.getElementById("reset").addEventListener("click", () => {
+      activeCategories = ["camper", "eten", "natuur"];
+      document.querySelectorAll('.filters input[type=checkbox]').forEach(cb => cb.checked = true);
+      searchQuery = "";
+      document.getElementById("search").value = "";
+      renderPlaces();
+    });
+  </script>
+
+
+
+  
+</body>
+</html>
