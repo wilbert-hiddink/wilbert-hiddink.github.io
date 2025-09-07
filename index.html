@@ -359,7 +359,11 @@ document.getElementById("goPlace").addEventListener("click", () => {
       const lat = parseFloat(data[0].lat);
       const lon = parseFloat(data[0].lon);
 
-      // Filter markers op afstand
+      // Maak een cirkel rondom de ingevoerde locatie
+      const circle = L.circle([lat, lon], { radius: radius * 1000 }); // straal in meters
+      map.fitBounds(circle.getBounds(), { padding: [20, 20] });
+
+      // Filter markers binnen de straal
       let visibleMarkers = [];
       allPlaces.forEach(place => {
         const d = distanceKm(lat, lon, place.lat, place.lon);
@@ -374,14 +378,6 @@ document.getElementById("goPlace").addEventListener("click", () => {
         }
       });
 
-      // Zoom op alle zichtbare markers
-      if (visibleMarkers.length > 0) {
-        const bounds = L.latLngBounds(visibleMarkers.map(m => m.getLatLng()));
-        map.fitBounds(bounds, { padding: [20, 20] });
-      } else {
-        map.setView([lat, lon], 12); // fallback
-      }
-
       // Update telling
       const visibleCount = visibleMarkers.length;
       document.getElementById("list-count").textContent = visibleCount + " plek" + (visibleCount === 1 ? "" : "ken") + " gevonden";
@@ -390,10 +386,12 @@ document.getElementById("goPlace").addEventListener("click", () => {
 });
 
 
+
 // Update lijst bij zoomen/pannen
 map.on("moveend", filterListByMapBounds);
 </script>
 </body>
 </html>
+
 
 
