@@ -129,7 +129,7 @@ h2 { padding: 10px; margin: 0; }
     </div>
   </div>
 
-  <!-- Categorie-checkboxes + Toon alles knop naast elkaar -->
+  <!-- Categorie-checkboxes + Toon alles knop -->
   <div class="filter-cats">
     <label><input type="checkbox" value="camper" checked> Camperplaatsen</label>
     <label><input type="checkbox" value="eten" checked> Restaurants</label>
@@ -189,6 +189,7 @@ var highlightIcon = L.icon({
 var activeMarker = null;
 var activeItem = null;
 
+// CSV inladen
 Papa.parse("plekken.csv", {
   download: true,
   header: true,
@@ -199,7 +200,6 @@ Papa.parse("plekken.csv", {
       if (isNaN(lat) || isNaN(lon)) return;
 
       var marker = L.marker([lat, lon], { icon: defaultIcon });
-
       allPlaces.push({ data: p, marker: marker, lat: lat, lon: lon, index: index });
     });
     renderPlaces();
@@ -248,7 +248,6 @@ function renderPlaces() {
   });
 
   countDiv.textContent = visibleCount + " plek" + (visibleCount === 1 ? "" : "ken") + " gevonden";
-
   zoomToAll();
   filterListByMapBounds();
 }
@@ -268,10 +267,7 @@ function selectPlace(place) {
 }
 
 function zoomToAll() {
-  let visibleMarkers = allPlaces
-    .filter(place => map.hasLayer(place.marker))
-    .map(place => place.marker.getLatLng());
-
+  let visibleMarkers = allPlaces.filter(p => map.hasLayer(p.marker)).map(p => p.marker.getLatLng());
   if (visibleMarkers.length > 0) {
     var bounds = L.latLngBounds(visibleMarkers);
     map.fitBounds(bounds, { padding: [40, 40] });
@@ -290,10 +286,6 @@ function filterListByMapBounds() {
       item.style.display = "none";
     }
   });
-
-  const visibleCount = Array.from(document.querySelectorAll(".place-item"))
-    .filter(item => item.style.display !== "none").length;
-  document.getElementById("list-count").textContent = visibleCount + " plek" + (visibleCount === 1 ? "" : "ken") + " gevonden";
 }
 
 // Filters
@@ -305,10 +297,8 @@ document.querySelectorAll('.filters input[type=checkbox]').forEach(cb => {
     } else {
       activeCategories = activeCategories.filter(c => c !== cat);
     }
-
     if (activeMarker) { activeMarker.setIcon(defaultIcon); activeMarker = null; }
     if (activeItem) { activeItem.style.backgroundColor = "white"; activeItem = null; }
-
     renderPlaces();
   });
 });
@@ -327,14 +317,12 @@ document.getElementById("reset").addEventListener("click", () => {
   document.getElementById("search").value = "";
   document.getElementById("place").value = "";
   document.getElementById("radius").value = "";
-
   if (activeMarker) { activeMarker.setIcon(defaultIcon); activeMarker = null; }
   if (activeItem) { activeItem.style.backgroundColor = "white"; activeItem = null; }
-
   renderPlaces();
 });
 
-// Plaats + straal (precies passend)
+// Afstand in km
 function distanceKm(lat1, lon1, lat2, lon2) {
   const R = 6371;
   const dLat = (lat2-lat1) * Math.PI/180;
@@ -346,6 +334,7 @@ function distanceKm(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
+// Plaats + straal zoekfunctie
 document.getElementById("goPlace").addEventListener("click", () => {
   const placeName = document.getElementById("place").value.trim();
   const radius = parseFloat(document.getElementById("radius").value);
@@ -358,10 +347,6 @@ document.getElementById("goPlace").addEventListener("click", () => {
 
       const lat = parseFloat(data[0].lat);
       const lon = parseFloat(data[0].lon);
-
-      // Maak een cirkel rondom de ingevoerde locatie
-      const circle = L.circle([lat, lon], { radius: radius * 1000 }); // straal in meters
-      map.fitBounds(circle.getBounds(), { padding: [20, 20] });
 
       // Filter markers binnen de straal
       let visibleMarkers = [];
@@ -378,20 +363,21 @@ document.getElementById("goPlace").addEventListener("click", () => {
         }
       });
 
-      // Update telling
-      const visibleCount = visibleMarkers.length;
-      document.getElementById("list-count").textContent = visibleCount + " plek" + (visibleCount === 1 ? "" : "ken") + " gevonden";
+      // Zoom op het gebied met cirkel
+      if (visibleMarkers.length > 0) {
+        const bounds = L.latLngBounds(visibleMarkers.map(m => m.getLatLng()));
+        map.fitBounds(bounds, { padding: [20, 20] });
+      } else {
+        map.setView([lat, lon], 12);
+      }
+
+      document.getElementById("list-count").textContent = visibleMarkers.length + " plek" + (visibleMarkers.length===1?"":"ken")+ " gevonden";
     })
     .catch(err => { console.error(err); alert("Fout bij ophalen locatie"); });
 });
-
-
 
 // Update lijst bij zoomen/pannen
 map.on("moveend", filterListByMapBounds);
 </script>
 </body>
 </html>
-
-
-
