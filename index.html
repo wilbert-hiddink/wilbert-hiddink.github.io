@@ -42,6 +42,39 @@
       margin-top: 5px;
       border-radius: 6px;
     }
+
+
+    <!-- opmaak lijst -->
+    #list {
+    padding: 15px;
+    border-top: 1px solid #ccc;
+    max-height: 300px;
+    overflow-y: auto;
+    background: #fafafa;
+    }
+    .place-item {
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: white;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .place-item:hover {
+      background: #f0f8ff;
+    }
+    .place-item h4 {
+      margin: 0 0 5px;
+      font-size: 16px;
+    }
+    .place-item img {
+      max-width: 100%;
+      border-radius: 6px;
+      margin-top: 5px;
+    }
+
+    
   </style>
 </head>
 <body>
@@ -60,6 +93,10 @@
     <div id="map"></div>
   </div>
 
+  <!-- Lijst onder de kaart -->
+  <div id="list"></div>
+  
+  
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <!-- PapaParse JS -->
@@ -102,6 +139,29 @@
           var marker = L.marker([p.lat, p.lon]).bindPopup(popupContent);
           marker.addTo(map);
           markerGroups[p.cat]?.push(marker);
+
+
+          // 🔹 lijst-item maken
+          var item = document.createElement("div");
+          item.className = "place-item";
+          item.innerHTML = `
+            <h4>${p.name}</h4>
+            <p><em>${p.cat}</em></p>
+            <p>${p.desc}</p>
+            <a href="${p.link}" target="_blank">Website</a><br>
+            ${p.img ? `<img src="${p.img}" alt="${p.name}">` : ""}
+          `;
+  
+          // Klikken op lijst-item opent popup
+          item.addEventListener("click", () => {
+            map.setView([lat, lon], 12);
+            marker.openPopup();
+          });
+  
+          listDiv.appendChild(item);
+
+
+          
         });
       }
     });
@@ -120,6 +180,7 @@
   </script>
 </body>
 </html>
+
 
 
 
