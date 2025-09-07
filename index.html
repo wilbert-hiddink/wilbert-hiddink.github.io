@@ -13,13 +13,14 @@
       margin: 0;
       padding: 0;
     }
-    h2 {
-      padding: 10px;
-    }
+    h2 { padding: 10px; }
+
+    /* ⬇️ Kaartgedeelte is nu half zo hoog */
     .container {
       display: flex;
-      height: calc(100vh - 60px);
+      height: 50vh; /* was: calc(100vh - 60px) */
     }
+
     .filters {
       width: 220px;
       padding: 15px;
@@ -31,9 +32,7 @@
       margin-bottom: 10px;
       font-size: 14px;
     }
-    .search-box {
-      margin: 15px 0;
-    }
+    .search-box { margin: 15px 0; }
     .search-box input {
       width: 100%;
       padding: 6px;
@@ -52,14 +51,16 @@
       cursor: pointer;
       transition: background 0.2s;
     }
-    .reset-btn:hover {
-      background: #005fa3;
-    }
+    .reset-btn:hover { background: #005fa3; }
+
     #map {
       flex: 1;
+      height: 100%; /* ✅ expliciet, zodat Leaflet altijd hoogte heeft */
     }
+
+    /* ⬇️ Lijst staat netjes onder de kaart en is langer */
     #list-container {
-      margin-left: 220px; /* zelfde breedte als filters */
+      margin-left: 220px; /* uitlijnen onder de kaart (zelfde breedte als filters) */
       border-top: 1px solid #ccc;
       background: #fafafa;
       padding: 15px;
@@ -69,7 +70,7 @@
       margin-bottom: 10px;
     }
     #list {
-      max-height: 300px;
+      max-height: 60vh;  /* was 300px → nu veel langer */
       overflow-y: auto;
     }
     .place-item {
@@ -81,18 +82,9 @@
       cursor: pointer;
       transition: background 0.2s;
     }
-    .place-item:hover {
-      background: #f0f8ff;
-    }
-    .place-item h4 {
-      margin: 0 0 5px;
-      font-size: 16px;
-    }
-    .place-item img {
-      max-width: 100%;
-      border-radius: 6px;
-      margin-top: 5px;
-    }
+    .place-item:hover { background: #f0f8ff; }
+    .place-item h4 { margin: 0 0 5px; font-size: 16px; }
+    .place-item img { max-width: 100%; border-radius: 6px; margin-top: 5px; }
   </style>
 </head>
 <body>
@@ -147,7 +139,7 @@
       download: true,
       header: true,
       complete: function(results) {
-        results.data.forEach((p, i) => {
+        results.data.forEach((p) => {
           var lat = parseFloat(p.lat);
           var lon = parseFloat(p.lon);
           if (isNaN(lat) || isNaN(lon)) return;
@@ -234,9 +226,7 @@
       cb.addEventListener('change', () => {
         let cat = cb.value;
         if (cb.checked) {
-          if (!activeCategories.includes(cat)) {
-            activeCategories.push(cat);
-          }
+          if (!activeCategories.includes(cat)) activeCategories.push(cat);
         } else {
           activeCategories = activeCategories.filter(c => c !== cat);
         }
@@ -266,13 +256,3 @@
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
