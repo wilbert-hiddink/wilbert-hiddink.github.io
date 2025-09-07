@@ -43,14 +43,15 @@ h2 { padding: 10px; margin: 0; }
   gap: 10px;
   margin-top: 5px;
 }
-.search-box input {
+.search-box input, #place, #radius {
   padding: 6px;
   font-size: 14px;
   border: 1px solid #aaa;
   border-radius: 4px;
-  flex: 1;
-  min-width: 150px;
 }
+.search-box input { flex:1; min-width:150px; }
+#place { flex:1; min-width:150px; }
+#radius { width:80px; }
 .reset-btn {
   padding: 6px 10px;
   font-size: 14px;
@@ -129,10 +130,12 @@ h2 { padding: 10px; margin: 0; }
     <div class="search-box">
       <input type="text" id="search" placeholder="Zoek op naam of beschrijving...">
     </div>
-    <input type="text" id="place" placeholder="Voer plaatsnaam in">
-    <input type="number" id="radius" placeholder="Straal km" style="width: 80px;">
-    <button id="goPlace" class="reset-btn">Ga</button>
     <button id="reset" class="reset-btn">Toon alles</button>
+  </div>
+  <div class="filter-actions" style="margin-top:5px;">
+    <input type="text" id="place" placeholder="Voer plaatsnaam in">
+    <input type="number" id="radius" placeholder="Straal km">
+    <button id="goPlace" class="reset-btn">Ga</button>
   </div>
 </div>
 
@@ -286,57 +289,6 @@ function filterListByMapBounds() {
   document.getElementById("list-count").textContent = visibleCount + " plek" + (visibleCount === 1 ? "" : "ken") + " gevonden";
 }
 
-// Functie om afstand tussen twee coördinaten te berekenen (km)
-function distanceKm(lat1, lon1, lat2, lon2) {
-  const R = 6371; // aardstraal in km
-  const dLat = (lat2-lat1) * Math.PI/180;
-  const dLon = (lon2-lon1) * Math.PI/180;
-  const a = Math.sin(dLat/2)**2 +
-            Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) *
-            Math.sin(dLon/2)**2;
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c;
-}
-
-// Event handler knop "Ga"
-document.getElementById("goPlace").addEventListener("click", () => {
-  const placeName = document.getElementById("place").value;
-  const radius = parseFloat(document.getElementById("radius").value);
-  if (!placeName) return;
-
-  // Nominatim API geocode
-  fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(placeName)}`)
-    .then(res => res.json())
-    .then(data => {
-      if (data.length === 0) { alert("Plaats niet gevonden"); return; }
-      const loc = data[0];
-      const lat = parseFloat(loc.lat);
-      const lon = parseFloat(loc.lon);
-
-      // Zoom naar plaats met een geschikte zoom
-      map.setView([lat, lon], 12);
-
-      // Filter markers op straal
-      allPlaces.forEach(place => {
-        const d = distanceKm(lat, lon, place.lat, place.lon);
-        const item = document.getElementById("place-" + place.index);
-        if (d <= radius) {
-          place.marker.addTo(map);
-          if (item) item.style.display = "block";
-        } else {
-          map.removeLayer(place.marker);
-          if (item) item.style.display = "none";
-        }
-      });
-
-      // Update telling
-      const visibleCount = Array.from(document.querySelectorAll(".place-item"))
-        .filter(item => item.style.display !== "none").length;
-      document.getElementById("list-count").textContent = visibleCount + " plek" + (visibleCount === 1 ? "" : "ken") + " gevonden";
-    });
-});
-
-  
 // Filters
 document.querySelectorAll('.filters input[type=checkbox]').forEach(cb => {
   cb.addEventListener('change', () => {
@@ -347,7 +299,6 @@ document.querySelectorAll('.filters input[type=checkbox]').forEach(cb => {
       activeCategories = activeCategories.filter(c => c !== cat);
     }
 
-    // Reset highlight
     if (activeMarker) { activeMarker.setIcon(defaultIcon); activeMarker = null; }
     if (activeItem) { activeItem.style.backgroundColor = "white"; activeItem = null; }
 
@@ -367,6 +318,8 @@ document.getElementById("reset").addEventListener("click", () => {
   document.querySelectorAll('.filters input[type=checkbox]').forEach(cb => cb.checked = true);
   searchQuery = "";
   document.getElementById("search").value = "";
+  document.getElementById("place").value = "";
+  document.getElementById("radius").value = "";
 
   if (activeMarker) { activeMarker.setIcon(defaultIcon); activeMarker = null; }
   if (activeItem) { activeItem.style.backgroundColor = "white"; activeItem = null; }
@@ -374,9 +327,57 @@ document.getElementById("reset").addEventListener("click", () => {
   renderPlaces();
 });
 
+// Plaats + straal
+function distanceKm(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2-lat1) * Math.PI/180;
+  const dLon = (lon2-lon1) * Math.PI/180;
+  const a = Math.sin(dLat/2)**2 +
+            Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) *
+            Math.sin(dLon/2)**2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+document.getElementById("goPlace").addEventListener("click", () => {
+  const placeName = document.getElementById("place").value;
+  const radius = parseFloat(document.getElementById("radius").value);
+  if (!placeName || isNaN(radius)) { alert("Vul plaats en straal in"); return; }
+
+  fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(placeName)}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.length === 0) { alert("Plaats niet gevonden"); return; }
+      const loc = data[0];
+      const lat = parseFloat(loc.lat);
+      const lon = parseFloat(loc.lon);
+
+      // Bereken bounds zodat straal zichtbaar is
+      const latDiff = radius / 111;
+      const lonDiff = radius / (111 * Math.cos(lat * Math.PI/180));
+      const bounds = L.latLngBounds([lat-latDiff, lon-lonDiff], [lat+latDiff, lon+lonDiff]);
+      map.fitBounds(bounds);
+
+      allPlaces.forEach(place => {
+        const d = distanceKm(lat, lon, place.lat, place.lon);
+        const item = document.getElementById("place-" + place.index);
+        if (d <= radius) {
+          place.marker.addTo(map);
+          if (item) item.style.display = "block";
+        } else {
+          map.removeLayer(place.marker);
+          if (item) item.style.display = "none";
+        }
+      });
+
+      const visibleCount = Array.from(document.querySelectorAll(".place-item"))
+        .filter(item => item.style.display !== "none").length;
+      document.getElementById("list-count").textContent = visibleCount + " plek" + (visibleCount === 1 ? "" : "ken") + " gevonden";
+    });
+});
+
 // Update lijst bij zoomen/pannen
 map.on("moveend", filterListByMapBounds);
 </script>
 </body>
 </html>
-
