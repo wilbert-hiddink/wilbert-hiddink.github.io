@@ -137,8 +137,9 @@ h2 { padding: 10px; margin: 0; }
   </div>
 
   <!-- Plaats + straal -->
-  <div class="filter-actions" style="margin-top:5px;">
-    <input type="text" id="place" placeholder="Voer plaatsnaam in">
+  <div class="filter-actions" style="margin-top:5px; gap:10px;">
+    <label for="place" style="font-size:14px;">Zoek in de omgeving van:</label>
+    <input type="text" id="place" placeholder="Plaatsnaam">
     <input type="number" id="radius" placeholder="Straal km">
     <button id="goPlace" class="reset-btn">Ga</button>
   </div>
@@ -386,4 +387,5 @@ map.on("moveend", filterListByMapBounds);
 </script>
 </body>
 </html>
+
 
