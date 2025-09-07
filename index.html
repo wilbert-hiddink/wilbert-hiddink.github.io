@@ -21,7 +21,7 @@
       height: calc(100vh - 60px);
     }
     .filters {
-      width: 200px;
+      width: 220px;
       padding: 15px;
       background: #f7f7f7;
       border-right: 1px solid #ccc;
@@ -31,18 +31,47 @@
       margin-bottom: 10px;
       font-size: 14px;
     }
+    .search-box {
+      margin: 15px 0;
+    }
+    .search-box input {
+      width: 100%;
+      padding: 6px;
+      font-size: 14px;
+      border: 1px solid #aaa;
+      border-radius: 4px;
+    }
     #map {
       flex: 1;
     }
-    .popup-content h3 {
+    #list {
+      padding: 15px;
+      border-top: 1px solid #ccc;
+      max-height: 300px;
+      overflow-y: auto;
+      background: #fafafa;
+    }
+    .place-item {
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: white;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .place-item:hover {
+      background: #f0f8ff;
+    }
+    .place-item h4 {
       margin: 0 0 5px;
       font-size: 16px;
     }
-    .popup-content img {
-      margin-top: 5px;
+    .place-item img {
+      max-width: 100%;
       border-radius: 6px;
+      margin-top: 5px;
     }
-   
   </style>
 </head>
 <body>
@@ -55,20 +84,26 @@
       <label><input type="checkbox" value="camper" checked> Camperplaatsen</label>
       <label><input type="checkbox" value="eten" checked> Restaurants</label>
       <label><input type="checkbox" value="natuur" checked> Natuur</label>
+
+      <!-- Zoekbalk -->
+      <div class="search-box">
+        <input type="text" id="search" placeholder="Zoek op naam of beschrijving...">
+      </div>
     </div>
 
     <!-- Map -->
     <div id="map"></div>
   </div>
 
-  
+  <!-- Lijst onder de kaart -->
+  <div id="list"></div>
+
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <!-- PapaParse JS -->
   <script src="https://unpkg.com/papaparse@5.3.2/papaparse.min.js"></script>
 
   <script>
-    // Kaart starten
     var map = L.map('map').setView([52.1, 5.3], 7);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -76,20 +111,19 @@
       attribution: '© OpenStreetMap'
     }).addTo(map);
 
-    // Marker-groepen
-    var markerGroups = {
-      camper: [],
-      eten: [],
-      natuur: []
-    };
+    var allPlaces = []; // alle data (markers + info)
+    var activeCategories = ["camper", "eten", "natuur"];
+    var searchQuery = "";
 
-    // CSV inladen (plekken.csv moet in dezelfde map staan als index.html)
+    // CSV inladen
     Papa.parse("plekken.csv", {
       download: true,
       header: true,
       complete: function(results) {
-        results.data.forEach(p => {
-          if (!p.lat || !p.lon) return; // skip lege rijen
+        results.data.forEach((p, i) => {
+          var lat = parseFloat(p.lat);
+          var lon = parseFloat(p.lon);
+          if (isNaN(lat) || isNaN(lon)) return;
 
           var popupContent = `
             <div class="popup-content">
@@ -101,24 +135,83 @@
             </div>
           `;
 
-          var marker = L.marker([p.lat, p.lon]).bindPopup(popupContent);
-          marker.addTo(map);
-          markerGroups[p.cat]?.push(marker);
+          var marker = L.marker([lat, lon]).bindPopup(popupContent);
 
+          allPlaces.push({
+            data: p,
+            marker: marker,
+            lat: lat,
+            lon: lon
+          });
         });
+
+        renderPlaces();
       }
     });
 
-    // Filterfunctie
-    document.querySelectorAll('.filters input').forEach(cb => {
+    // 🔹 Renderfunctie voor kaart + lijst
+    function renderPlaces() {
+      var listDiv = document.getElementById("list");
+      listDiv.innerHTML = "";
+
+      allPlaces.forEach(place => {
+        let cat = place.data.cat || "";
+        let name = place.data.name || "";
+        let desc = place.data.desc || "";
+
+        // Filter op categorie
+        if (!activeCategories.includes(cat)) {
+          map.removeLayer(place.marker);
+          return;
+        }
+
+        // Filter op zoekterm
+        let searchText = (name + " " + desc).toLowerCase();
+        if (searchQuery && !searchText.includes(searchQuery.toLowerCase())) {
+          map.removeLayer(place.marker);
+          return;
+        }
+
+        // Anders → tonen
+        place.marker.addTo(map);
+
+        var item = document.createElement("div");
+        item.className = "place-item";
+        item.innerHTML = `
+          <h4>${name}</h4>
+          <p><em>${cat}</em></p>
+          <p>${desc}</p>
+          <a href="${place.data.link}" target="_blank">Website</a><br>
+          ${place.data.img ? `<img src="${place.data.img}" alt="${name}">` : ""}
+        `;
+
+        // Klik op lijst-item → zoom naar marker
+        item.addEventListener("click", () => {
+          map.setView([place.lat, place.lon], 12);
+          place.marker.openPopup();
+        });
+
+        listDiv.appendChild(item);
+      });
+    }
+
+    // 🔹 Filters koppelen
+    document.querySelectorAll('.filters input[type=checkbox]').forEach(cb => {
       cb.addEventListener('change', () => {
         let cat = cb.value;
         if (cb.checked) {
-          markerGroups[cat].forEach(m => m.addTo(map));
+          activeCategories.push(cat);
         } else {
-          markerGroups[cat].forEach(m => map.removeLayer(m));
+          activeCategories = activeCategories.filter(c => c !== cat);
         }
+        renderPlaces();
       });
+    });
+
+    // 🔹 Zoekbalk koppelen
+    document.getElementById("search").addEventListener("input", e => {
+      searchQuery = e.target.value;
+      renderPlaces();
     });
   </script>
 </body>
