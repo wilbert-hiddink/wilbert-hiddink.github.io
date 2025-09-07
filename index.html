@@ -320,8 +320,20 @@ document.getElementById("reset").addEventListener("click", () => {
   document.querySelectorAll('.filters input[type=checkbox]').forEach(cb => cb.checked = true);
   searchQuery = "";
   document.getElementById("search").value = "";
+
+  // Vorige selectie resetten
+  if (activeMarker) {
+    activeMarker.setIcon(defaultIcon);
+    activeMarker = null;
+  }
+  if (activeItem) {
+    activeItem.style.backgroundColor = "white";
+    activeItem = null;
+  }
+
   renderPlaces();
 });
+
 </script>
 
 
@@ -329,5 +341,6 @@ document.getElementById("reset").addEventListener("click", () => {
   
 </body>
 </html>
+
 
 
