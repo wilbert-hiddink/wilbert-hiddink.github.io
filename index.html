@@ -19,21 +19,41 @@
 
     h2 { padding: 10px; margin: 0; }
 
+    /* 🔹 Filters bovenaan sticky */
     .filters {
-      padding: 10px 15px;
+      position: sticky;
+      top: 0;
       background: #f7f7f7;
       border-bottom: 1px solid #ccc;
+      padding: 10px 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      z-index: 1000;
+    }
+
+    /* Categorie-checkboxes */
+    .filter-cats {
       display: flex;
       flex-wrap: wrap;
-      align-items: center;
       gap: 10px;
     }
     .filters label { font-size: 14px; }
+
+    /* Zoek en reset onder de filters */
+    .filter-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 5px;
+    }
     .search-box input {
       padding: 6px;
       font-size: 14px;
       border: 1px solid #aaa;
       border-radius: 4px;
+      flex: 1;
+      min-width: 150px;
     }
     .reset-btn {
       padding: 6px 10px;
@@ -47,6 +67,7 @@
     }
     .reset-btn:hover { background: #005fa3; }
 
+    /* Container kaart + lijst */
     .main {
       flex: 1;
       display: flex;
@@ -98,16 +119,15 @@
         width: 100%;
         border-left: none;
         border-top: 1px solid #ccc;
-        height: 40vh;  /* hoogte lijst mobiel */
+        height: 40vh;
         flex-shrink: 0;
       }
       #map {
-        height: 60vh; /* kaart vult resterende hoogte */
+        height: 60vh;
         flex: none;
       }
     }
 
-    /* Extra kleine schermen */
     @media (max-width: 500px) {
       #list-container { height: 50vh; }
       #map { height: 50vh; }
@@ -118,15 +138,17 @@
   <h2>Kaart met interessante plekken 🚐</h2>
 
   <div class="filters">
-    <label><input type="checkbox" value="camper" checked> Camperplaatsen</label>
-    <label><input type="checkbox" value="eten" checked> Restaurants</label>
-    <label><input type="checkbox" value="natuur" checked> Natuur</label>
-
-    <div class="search-box">
-      <input type="text" id="search" placeholder="Zoek op naam of beschrijving...">
+    <div class="filter-cats">
+      <label><input type="checkbox" value="camper" checked> Camperplaatsen</label>
+      <label><input type="checkbox" value="eten" checked> Restaurants</label>
+      <label><input type="checkbox" value="natuur" checked> Natuur</label>
     </div>
-
-    <button id="reset" class="reset-btn">Toon alles</button>
+    <div class="filter-actions">
+      <div class="search-box">
+        <input type="text" id="search" placeholder="Zoek op naam of beschrijving...">
+      </div>
+      <button id="reset" class="reset-btn">Toon alles</button>
+    </div>
   </div>
 
   <div class="main">
@@ -266,4 +288,3 @@
   </script>
 </body>
 </html>
-
