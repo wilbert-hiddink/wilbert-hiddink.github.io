@@ -59,7 +59,7 @@
       flex: 1;
     }
     #list-container {
-      margin-left: 220px; /* uitlijnen onder de kaart */
+      margin-left: 220px; /* zelfde breedte als filters */
       border-top: 1px solid #ccc;
       background: #fafafa;
       padding: 15px;
@@ -69,12 +69,8 @@
       margin-bottom: 10px;
     }
     #list {
-      max-height: 300px; /* vaste hoogte */
-      overflow-y: auto;  /* scrollbalk */
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      background: #fff;
-      padding: 10px;
+      max-height: 300px;
+      overflow-y: auto;
     }
     .place-item {
       padding: 10px;
@@ -244,6 +240,35 @@
         } else {
           activeCategories = activeCategories.filter(c => c !== cat);
         }
+        renderPlaces();
+      });
+    });
+
+    // 🔹 Zoekbalk koppelen
+    document.getElementById("search").addEventListener("input", e => {
+      searchQuery = e.target.value;
+      renderPlaces();
+    });
+
+    // 🔹 Resetknop koppelen
+    document.getElementById("reset").addEventListener("click", () => {
+      // Alles aanvinken
+      activeCategories = ["camper", "eten", "natuur"];
+      document.querySelectorAll('.filters input[type=checkbox]').forEach(cb => cb.checked = true);
+
+      // Zoekveld leegmaken
+      searchQuery = "";
+      document.getElementById("search").value = "";
+
+      // Alles opnieuw tonen
+      renderPlaces();
+    });
+  </script>
+</body>
+</html>
+
+
+
 
 
 
