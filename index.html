@@ -337,8 +337,7 @@ function distanceKm(lat1, lon1, lat2, lon2) {
 // Plaats + straal zoekfunctie
 document.getElementById("goPlace").addEventListener("click", () => {
   const placeName = document.getElementById("place").value.trim();
-  const radius = parseFloat(document.getElementById("radius").value);
-  if (!placeName || isNaN(radius)) { alert("Vul plaats en straal in"); return; }
+  if (!placeName) { alert("Vul een plaatsnaam in"); return; }
 
   fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(placeName)}`)
     .then(res => res.json())
@@ -348,14 +347,23 @@ document.getElementById("goPlace").addEventListener("click", () => {
       const lat = parseFloat(data[0].lat);
       const lon = parseFloat(data[0].lon);
 
-      // Filter markers binnen de straal
-      let visibleMarkers = [];
+      // Vast zoomniveau ~50 km
+      const radius = 50; // km
+      const latDiff = radius / 111; // 1 graad ≈ 111 km
+      const lonDiff = radius / (111 * Math.cos(lat * Math.PI/180));
+
+      const bounds = [
+        [lat - latDiff, lon - lonDiff],
+        [lat + latDiff, lon + lonDiff]
+      ];
+      map.fitBounds(bounds, { padding: [20,20] });
+
+      // Filter markers binnen deze 50 km
       allPlaces.forEach(place => {
         const d = distanceKm(lat, lon, place.lat, place.lon);
         const item = document.getElementById("place-" + place.index);
         if (d <= radius && activeCategories.includes(place.data.cat)) {
           place.marker.addTo(map);
-          visibleMarkers.push(place.marker);
           if (item) item.style.display = "block";
         } else {
           map.removeLayer(place.marker);
@@ -363,15 +371,10 @@ document.getElementById("goPlace").addEventListener("click", () => {
         }
       });
 
-      // Zoom op het gebied met cirkel
-      if (visibleMarkers.length > 0) {
-        const bounds = L.latLngBounds(visibleMarkers.map(m => m.getLatLng()));
-        map.fitBounds(bounds, { padding: [20, 20] });
-      } else {
-        map.setView([lat, lon], 12);
-      }
-
-      document.getElementById("list-count").textContent = visibleMarkers.length + " plek" + (visibleMarkers.length===1?"":"ken")+ " gevonden";
+      // Update telling
+      const visibleCount = Array.from(document.querySelectorAll(".place-item"))
+        .filter(item => item.style.display !== "none").length;
+      document.getElementById("list-count").textContent = visibleCount + " plek" + (visibleCount===1?"":"ken")+ " gevonden";
     })
     .catch(err => { console.error(err); alert("Fout bij ophalen locatie"); });
 });
@@ -381,3 +384,4 @@ map.on("moveend", filterListByMapBounds);
 </script>
 </body>
 </html>
+
