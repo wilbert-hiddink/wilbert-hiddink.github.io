@@ -19,6 +19,7 @@
 
     h2 { padding: 10px; margin: 0; }
 
+    /* Filters bovenaan */
     .filters {
       padding: 10px 15px;
       background: #f7f7f7;
@@ -26,7 +27,7 @@
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      gap: 15px;
+      gap: 10px;
     }
     .filters label { font-size: 14px; }
     .search-box input {
@@ -47,10 +48,12 @@
     }
     .reset-btn:hover { background: #005fa3; }
 
+    /* Container kaart + lijst */
     .main {
       flex: 1;
       display: flex;
       min-height: 0;
+      gap: 1px;
     }
 
     #map { flex: 1; }
@@ -87,6 +90,20 @@
     .place-item:hover { background: #f0f8ff; }
     .place-item h4 { margin: 0 0 5px; font-size: 16px; }
     .place-item img { max-width: 100%; border-radius: 6px; margin-top: 5px; }
+
+    /* 🔹 RESPONSIVE */
+    @media (max-width: 900px) {
+      .main {
+        flex-direction: column;
+      }
+      #list-container {
+        width: 100%;
+        border-left: none;
+        border-top: 1px solid #ccc;
+        height: 300px; /* vaste hoogte voor lijst op mobiel */
+      }
+      #map { height: 50vh; } /* kaart hoogte mobiel */
+    }
   </style>
 </head>
 <body>
@@ -200,8 +217,7 @@
 
       countDiv.textContent = visibleCount + " plek" + (visibleCount === 1 ? "" : "ken") + " gevonden";
 
-      // ⬇️ Na elk renderen automatisch uitzoomen naar alle zichtbare markers
-      zoomToAll();
+      zoomToAll(); // altijd automatisch uitzoomen
     }
 
     function zoomToAll() {
