@@ -107,11 +107,15 @@ h2 { padding: 10px; margin: 0; }
 .place-item img { max-width: 100%; border-radius: 6px; margin-top: 5px; }
 
 #place-search {
-  padding: 10px;
-  border-top: 1px solid #ccc;
+  position: sticky;
+  bottom: 0;
   background: #f7f7f7;
+  border-top: 1px solid #ccc;
+  padding: 10px;
   display: flex;
   gap: 10px;
+  align-items: center;
+  z-index: 1000;
 }
 #place-search input {
   flex: 1;
@@ -161,7 +165,7 @@ h2 { padding: 10px; margin: 0; }
   </div>
 </div>
 
-<!-- Zoekveld onder de kaart -->
+<!-- Sticky zoekveld onder de kaart -->
 <div id="place-search">
   <input type="text" id="place" placeholder="Zoek in de omgeving van...">
   <button id="goPlace" class="reset-btn">Ga</button>
@@ -365,3 +369,4 @@ map.on("moveend", filterListByMapBounds);
 </script>
 </body>
 </html>
+
