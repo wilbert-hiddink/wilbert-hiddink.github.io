@@ -325,22 +325,14 @@ document.getElementById("search").addEventListener("input", e => {
 });
 
 document.getElementById("reset").addEventListener("click", () => {
-  // Reset categorieën en zoekveld
   activeCategories = ["camper", "eten", "natuur"];
   document.querySelectorAll('.filters input[type=checkbox]').forEach(cb => cb.checked = true);
   searchQuery = "";
   document.getElementById("search").value = "";
-
-  // Vorige selectie resetten
   if (activeMarker) { activeMarker.setIcon(defaultIcon); activeMarker = null; }
   if (activeItem) { activeItem.style.backgroundColor = "white"; activeItem = null; }
-
   renderPlaces();
-
-  // ✅ Zoom uit zodat alle zichtbare markers op de kaart passen
-  zoomToAll();
 });
-
 
 // Zoekveld onder de kaart
 document.getElementById("goPlace").addEventListener("click", goToPlace);
@@ -376,6 +368,5 @@ map.on("moveend", filterListByMapBounds);
 </script>
 </body>
 </html>
-
 
 
