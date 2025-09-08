@@ -151,13 +151,25 @@
     </div>
   </div>
 
+
   <div class="main">
+  <div style="flex:1; display:flex; flex-direction:column;">
     <div id="map"></div>
-    <div id="list-container">
-      <div id="list-count">0 plekken gevonden</div>
-      <div id="list"></div>
+
+    <!-- Nieuw zoekveld onder de kaart -->
+    <div id="place-search">
+      <label for="place">Zoek plaats:</label>
+      <input type="text" id="place" placeholder="Plaatsnaam">
+      <button id="goPlace">Ga</button>
     </div>
   </div>
+
+  <div id="list-container">
+    <div id="list-count">0 plekken gevonden</div>
+    <div id="list"></div>
+  </div>
+</div>
+
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="https://unpkg.com/papaparse@5.3.2/papaparse.min.js"></script>
@@ -334,6 +346,37 @@ document.getElementById("reset").addEventListener("click", () => {
   renderPlaces();
 });
 
+
+// Plaats zoeken: kaart verplaatsen en zoomen naar ±25 km radius
+document.getElementById("goPlace").addEventListener("click", () => {
+  const placeName = document.getElementById("place").value.trim();
+  if (!placeName) { alert("Vul een plaatsnaam in"); return; }
+
+  fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(placeName)}`)
+    .then(res => res.json())
+    .then(data => {
+      if (!data || data.length === 0) { alert("Plaats niet gevonden"); return; }
+
+      const lat = parseFloat(data[0].lat);
+      const lon = parseFloat(data[0].lon);
+
+      // Bereken een bounding box van ±25 km
+      const latOffset = 25 / 111; // 1 graad ≈ 111 km
+      const lonOffset = 25 / (111 * Math.cos(lat * Math.PI/180));
+
+      const bounds = [
+        [lat - latOffset, lon - lonOffset],
+        [lat + latOffset, lon + lonOffset]
+      ];
+
+      map.fitBounds(bounds);
+    })
+    .catch(err => { console.error(err); alert("Fout bij ophalen locatie"); });
+});
+
+
+
+  
 </script>
 
 
@@ -341,5 +384,6 @@ document.getElementById("reset").addEventListener("click", () => {
   
 </body>
 </html>
+
 
 
