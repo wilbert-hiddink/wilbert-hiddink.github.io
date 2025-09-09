@@ -7,19 +7,12 @@
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 <style>
-/* ... jouw bestaande CSS (om ruimte te besparen niet herhaald) ... */
-/* (Plak hier exact jouw CSS uit je originele file) */
-body {
-  font-family: Arial, sans-serif;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-}
+/* zelfde CSS als je vorige versie, niet veranderd */
+body { font-family: Arial, sans-serif; margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; }
 h2 { padding: 10px; margin: 0; }
 .filters { position: sticky; top: 0; background: #f7f7f7; border-bottom: 1px solid #ccc; padding: 10px 15px; display:flex; flex-direction:column; gap:5px; z-index:1000; }
-.filter-cats { display:flex; flex-wrap:wrap; gap:10px; } .filters label{font-size:14px;}
+.filter-cats { display:flex; flex-wrap:wrap; gap:10px; }
+.filters label{font-size:14px;}
 .filter-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:5px;}
 .search-box input{padding:6px;font-size:14px;border:1px solid #aaa;border-radius:4px;flex:1;min-width:150px;}
 .reset-btn{padding:6px 10px;font-size:14px;background:#0078d7;color:white;border:none;border-radius:4px;cursor:pointer;transition:background 0.2s;}
@@ -40,7 +33,7 @@ h2 { padding: 10px; margin: 0; }
 </style>
 </head>
 <body>
-<h2>Kaart met CSV-plekken 🚐 UPDATE</h2>
+<h2>Kaart met interessante plekken 🚐 Kleuren per categorie</h2>
 
 <div class="filters">
   <div class="filter-cats">
@@ -87,15 +80,26 @@ var allPlaces = [];
 var activeCategories = ["camper", "eten", "natuur"];
 var searchQuery = "";
 
-var defaultIcon = L.icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
+// ✅ Verschillende icons per categorie
+const icons = {
+  camper: L.icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    iconSize: [25,41], iconAnchor:[12,41], popupAnchor:[1,-34], shadowSize:[41,41]
+  }),
+  eten: L.icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    iconSize: [25,41], iconAnchor:[12,41], popupAnchor:[1,-34], shadowSize:[41,41]
+  }),
+  natuur: L.icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    iconSize: [25,41], iconAnchor:[12,41], popupAnchor:[1,-34], shadowSize:[41,41]
+  })
+};
 
+// Highlight icon (geel)
 var highlightIcon = L.icon({
   iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-yellow.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
@@ -117,8 +121,11 @@ Papa.parse("plekken.csv", {
       var lon = parseFloat(p.lon);
       if (isNaN(lat) || isNaN(lon)) return;
 
-      var marker = L.marker([lat, lon], { icon: defaultIcon });
-      allPlaces.push({ data: p, marker: marker, lat: lat, lon: lon, index: index });
+      let cat = (p.cat || "").toLowerCase();
+      let icon = icons[cat] || icons.camper; // fallback = blauw
+      var marker = L.marker([lat, lon], { icon: icon });
+
+      allPlaces.push({ data: p, marker: marker, lat: lat, lon: lon, index: index, defaultIcon: icon });
     });
 
     renderPlaces();
@@ -147,7 +154,6 @@ function renderPlaces() {
       return;
     }
 
-    // voeg marker toe aan kaart (indien nog niet)
     if (!map.hasLayer(place.marker)) {
       place.marker.addTo(map);
     }
@@ -168,13 +174,11 @@ function renderPlaces() {
     place.marker.on("click", () => { selectPlace(place); });
   });
 
-  // Zorg dat lijst en teller gefilterd worden naar zichtbare markers
   filterListByMapBounds();
 }
 
-// Highlight / scroll
 function selectPlace(place) {
-  if (activeMarker) activeMarker.setIcon(defaultIcon);
+  if (activeMarker) activeMarker.setIcon(activeMarker.defaultIcon);
   if (activeItem) activeItem.style.backgroundColor = "white";
 
   activeMarker = place.marker;
@@ -187,30 +191,15 @@ function selectPlace(place) {
   }
 }
 
-// --- DEFEINIE ZOOM-ALL FUNCTIE (ontbreekt in jouw versie) ---
+// zoomToAll (zelfde als eerder)
 function zoomToAll() {
-  // Zoek alle markers die momenteel op de kaart staan
-  const visibleLatLngs = allPlaces
-    .filter(p => map.hasLayer(p.marker))
-    .map(p => p.marker.getLatLng());
-
-  if (visibleLatLngs.length === 0) {
-    // geen markers zichtbaar: niks doen of eventueel terug naar default view
-    return;
-  }
-
-  if (visibleLatLngs.length === 1) {
-    // 1 marker -> vaste zoom (beter dan fitBounds op 1 punt)
-    map.setView(visibleLatLngs[0], 13);
-    return;
-  }
-
-  // meerdere markers -> fitBounds
+  const visibleLatLngs = allPlaces.filter(p => map.hasLayer(p.marker)).map(p => p.marker.getLatLng());
+  if (visibleLatLngs.length === 0) return;
+  if (visibleLatLngs.length === 1) { map.setView(visibleLatLngs[0], 13); return; }
   const bounds = L.latLngBounds(visibleLatLngs);
   map.fitBounds(bounds, { padding: [40, 40] });
 }
 
-// Filter lijst naar wat binnen huidige kaart-bounds zichtbaar is
 function filterListByMapBounds() {
   const bounds = map.getBounds();
   let visibleCount = 0;
@@ -218,8 +207,6 @@ function filterListByMapBounds() {
   allPlaces.forEach(place => {
     const item = document.getElementById("place-" + place.index);
     if (!item) return;
-
-    // toon alleen items waarvoor de marker op de kaart staat én binnen bounds ligt
     if (map.hasLayer(place.marker) && bounds.contains([place.lat, place.lon])) {
       item.style.display = "block";
       visibleCount++;
@@ -231,7 +218,7 @@ function filterListByMapBounds() {
   document.getElementById("list-count").textContent = visibleCount + " plek" + (visibleCount === 1 ? "" : "ken") + " gevonden";
 }
 
-// Filters en zoek
+// filters
 document.querySelectorAll('.filters input[type=checkbox]').forEach(cb => {
   cb.addEventListener('change', () => {
     let cat = cb.value;
@@ -249,29 +236,23 @@ document.getElementById("search").addEventListener("input", e => {
   renderPlaces();
 });
 
-// Reset knop: reset filters en zoom naar alle zichtbare markers
 document.getElementById("reset").addEventListener("click", () => {
   activeCategories = ["camper", "eten", "natuur"];
   document.querySelectorAll('.filters input[type=checkbox]').forEach(cb => cb.checked = true);
   searchQuery = "";
   document.getElementById("search").value = "";
 
-  if (activeMarker) { activeMarker.setIcon(defaultIcon); activeMarker = null; }
+  if (activeMarker) { activeMarker.setIcon(activeMarker.defaultIcon); activeMarker = null; }
   if (activeItem) { activeItem.style.backgroundColor = "white"; activeItem = null; }
 
   renderPlaces();
-
-  // Belangrijk: na renderPlaces() de kaart uitzoomen naar alle markers
   zoomToAll();
 });
 
-// Plaats-zoekveld (onder de kaart)
+// plaats zoeken
 document.getElementById("goPlace").addEventListener("click", goToPlace);
 document.getElementById("place").addEventListener("keypress", e => {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    goToPlace();
-  }
+  if (e.key === "Enter") { e.preventDefault(); goToPlace(); }
 });
 
 function goToPlace() {
@@ -282,11 +263,8 @@ function goToPlace() {
     .then(res => res.json())
     .then(data => {
       if (!data || data.length === 0) { alert("Plaats niet gevonden"); return; }
-
       const lat = parseFloat(data[0].lat);
       const lon = parseFloat(data[0].lon);
-
-      // ±25 km radius
       const latOffset = 25 / 111;
       const lonOffset = 25 / (111 * Math.cos(lat * Math.PI/180));
       map.fitBounds([[lat - latOffset, lon - lonOffset], [lat + latOffset, lon + lonOffset]]);
@@ -294,8 +272,9 @@ function goToPlace() {
     .catch(err => { console.error(err); alert("Fout bij ophalen locatie"); });
 }
 
-// Update lijst/teller bij zoomen/pannen
 map.on("moveend", filterListByMapBounds);
 </script>
 </body>
 </html>
+
+
