@@ -156,10 +156,10 @@ h2 { padding: 10px; margin: 0; }
     width: 100%;
     border-left: none;
     border-top: 1px solid #ccc;
-    height: 40vh;
+    height: 60vh;
     flex-shrink: 0;
   }
-  #map { height: 60vh; flex: none; }
+  #map { height: 40vh; flex: none; }
   #place-search { flex-direction: column; }
 }
 @media (max-width: 500px) {
@@ -169,7 +169,7 @@ h2 { padding: 10px; margin: 0; }
 </style>
 </head>
 <body>
-<h2>Kaart met CSV-plekken — 35%</h2>
+<h2>Kaart met CSV-plekken — verhouding hoogte</h2>
 
 <div class="filters">
   <div class="filter-cats">
@@ -434,5 +434,6 @@ map.on("moveend", filterListByMapBounds);
 </script>
 </body>
 </html>
+
 
 
