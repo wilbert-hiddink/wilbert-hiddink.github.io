@@ -2,15 +2,10 @@
 <html lang="nl">
 <head>
 <meta charset="utf-8" />
-<title>Kaart met CSV-plekken - Clustered</title>
+<title>Kaart met CSV-plekken</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- Leaflet CSS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-<!-- MarkerCluster CSS -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css"/>
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css"/>
-
 <style>
 body {
   font-family: Arial, sans-serif;
@@ -40,7 +35,33 @@ h2 { padding: 10px; margin: 0; }
   flex-wrap: wrap;
   gap: 10px;
 }
-.filters label { font-size: 14px; }
+
+/* Verborgen checkbox */
+.filter-cats input[type="checkbox"] {
+  display: none;
+}
+.filter-cats label {
+  cursor: pointer;
+}
+.filter-cats label span {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  color: white;
+  transition: background 0.2s;
+}
+
+/* Kleuren per categorie (als checked) */
+.filter-cats input[value="camper"]:checked + span { background: #1E90FF; } /* blauw */
+.filter-cats input[value="eten"]:checked + span { background: #E53935; } /* rood */
+.filter-cats input[value="natuur"]:checked + span { background: #43A047; } /* groen */
+
+/* Uitgevinkt = grijs */
+.filter-cats input:not(:checked) + span {
+  background: #ccc;
+  color: #333;
+}
 
 .filter-actions {
   display: flex;
@@ -59,14 +80,14 @@ h2 { padding: 10px; margin: 0; }
 .reset-btn {
   padding: 6px 10px;
   font-size: 14px;
-  background: #808080; /* grijs */
+  background: #6c757d;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   transition: background 0.2s;
 }
-.reset-btn:hover { background: #5a5a5a; }
+.reset-btn:hover { background: #5a6268; }
 
 .main {
   flex: 1;
@@ -78,7 +99,7 @@ h2 { padding: 10px; margin: 0; }
 #map { flex: 1; }
 
 #list-container {
-  width: 450px;
+  width: 35%;
   border-left: 1px solid #ccc;
   background: #fafafa;
   display: flex;
@@ -135,10 +156,10 @@ h2 { padding: 10px; margin: 0; }
     width: 100%;
     border-left: none;
     border-top: 1px solid #ccc;
-    height: 40vh;
+    height: 50vh;
     flex-shrink: 0;
   }
-  #map { height: 60vh; flex: none; }
+  #map { height: 50vh; flex: none; }
   #place-search { flex-direction: column; }
 }
 @media (max-width: 500px) {
@@ -148,13 +169,13 @@ h2 { padding: 10px; margin: 0; }
 </style>
 </head>
 <body>
-<h2>Kaart met CSV-plekken - Clustered</h2>
+<h2>Kaart met bezienswaardigheden!</h2>
 
 <div class="filters">
   <div class="filter-cats">
-    <label><input type="checkbox" value="camper" checked> Camperplaatsen</label>
-    <label><input type="checkbox" value="eten" checked> Restaurants</label>
-    <label><input type="checkbox" value="natuur" checked> Natuur</label>
+    <label><input type="checkbox" value="camper" checked><span>Camperplaatsen</span></label>
+    <label><input type="checkbox" value="eten" checked><span>Restaurants</span></label>
+    <label><input type="checkbox" value="natuur" checked><span>Natuur</span></label>
   </div>
   <div class="filter-actions">
     <div class="search-box">
@@ -182,179 +203,237 @@ h2 { padding: 10px; margin: 0; }
 </div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
 <script src="https://unpkg.com/papaparse@5.3.2/papaparse.min.js"></script>
-
 <script>
+/* kaart init */
 var map = L.map('map').setView([52.1, 5.3], 7);
-
-// Tile layer
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 19,
   attribution: '© OpenStreetMap'
 }).addTo(map);
 
-// Marker cluster group
-var markersCluster = L.markerClusterGroup();
-map.addLayer(markersCluster);
-
 var allPlaces = [];
 var activeCategories = ["camper", "eten", "natuur"];
 var searchQuery = "";
 
-// Icons per categorie
+/* icons per categorie */
 var icons = {
-  camper: L.icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png', shadowUrl: 'https://unpkg.com/leaflet/dist/images/marker-shadow.png', iconSize:[25,41], iconAnchor:[12,41], popupAnchor:[1,-34], shadowSize:[41,41]}),
-  eten: L.icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png', shadowUrl: 'https://unpkg.com/leaflet/dist/images/marker-shadow.png', iconSize:[25,41], iconAnchor:[12,41], popupAnchor:[1,-34], shadowSize:[41,41]}),
-  natuur: L.icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png', shadowUrl: 'https://unpkg.com/leaflet/dist/images/marker-shadow.png', iconSize:[25,41], iconAnchor:[12,41], popupAnchor:[1,-34], shadowSize:[41,41]})
+  camper: L.icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    iconSize: [25,41], iconAnchor:[12,41], popupAnchor:[1,-34], shadowSize:[41,41]
+  }),
+  eten: L.icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    iconSize: [25,41], iconAnchor:[12,41], popupAnchor:[1,-34], shadowSize:[41,41]
+  }),
+  natuur: L.icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    iconSize: [25,41], iconAnchor:[12,41], popupAnchor:[1,-34], shadowSize:[41,41]
+  })
 };
 
+/* highlight icon */
 var highlightIcon = L.icon({
   iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-yellow.png',
-  shadowUrl: 'https://unpkg.com/leaflet/dist/images/marker-shadow.png',
-  iconSize: [25,41],
-  iconAnchor: [12,41],
-  popupAnchor: [1,-34],
-  shadowSize: [41,41]
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  iconSize: [25,41], iconAnchor:[12,41], popupAnchor:[1,-34], shadowSize:[41,41]
 });
 
 var activeMarker = null;
 var activeItem = null;
 
-// CSV inladen
+/* CSV inladen en markers aanmaken (slaat default icon + cat op in marker) */
 Papa.parse("plekken.csv", {
   download: true,
   header: true,
   complete: function(results) {
-    results.data.forEach((p,index) => {
+    results.data.forEach((p, index) => {
       var lat = parseFloat(p.lat);
       var lon = parseFloat(p.lon);
-      if (isNaN(lat)||isNaN(lon)) return;
+      if (isNaN(lat) || isNaN(lon)) return;
 
-      var marker = L.marker([lat,lon], {icon: icons[p.cat] || icons.camper});
-      allPlaces.push({data:p, marker:marker, lat:lat, lon:lon, index:index, cat:p.cat || "camper"});
+      // categorie (zeker in lowercase voor mapping)
+      var cat = (p.cat || "camper").toLowerCase();
+      var icon = icons[cat] || icons.camper;
+
+      var marker = L.marker([lat, lon], { icon: icon });
+      // sla default icon en categorie op in marker (zodat we later correct kunnen resetten)
+      marker._defaultIcon = icon;
+      marker._cat = cat;
+
+      allPlaces.push({ data: p, marker: marker, lat: lat, lon: lon, index: index, cat: cat });
     });
 
     renderPlaces();
   }
 });
 
-// Render plaatsen en lijst
+/* render lijst + markers (wordt gebruikt bij filters/search/reset) */
 function renderPlaces() {
-  markersCluster.clearLayers();
   var listDiv = document.getElementById("list");
   listDiv.innerHTML = "";
-  let visibleCount = 0;
 
   allPlaces.forEach(place => {
     let cat = place.cat;
     let name = place.data.name || "";
     let desc = place.data.desc || "";
 
-    if(!activeCategories.includes(cat)) return;
-    let searchText = (name + " " + desc).toLowerCase();
-    if(searchQuery && !searchText.includes(searchQuery.toLowerCase())) return;
+    // categorie filter
+    if (!activeCategories.includes(cat)) {
+      if (map.hasLayer(place.marker)) map.removeLayer(place.marker);
+      return;
+    }
 
-    place.marker.setIcon(icons[cat]);
-    markersCluster.addLayer(place.marker);
+    // zoek filter
+    let searchText = (name + " " + desc).toLowerCase();
+    if (searchQuery && !searchText.includes(searchQuery.toLowerCase())) {
+      if (map.hasLayer(place.marker)) map.removeLayer(place.marker);
+      return;
+    }
+
+    // voeg marker toe als nog niet aanwezig
+    if (!map.hasLayer(place.marker)) {
+      place.marker.addTo(map);
+    }
 
     var item = document.createElement("div");
-    item.className="place-item";
-    item.id="place-"+place.index;
-    item.innerHTML=`<h4>${name}</h4><p><em>${cat}</em></p><p>${desc}</p><a href="${place.data.link}" target="_blank">Website</a>${place.data.img?`<br><img src="${place.data.img}" alt="${name}">`:''}`;
-    item.addEventListener("click",()=>{selectPlace(place);});
+    item.className = "place-item";
+    item.id = "place-" + place.index;
+    item.innerHTML = `
+      <h4>${name}</h4>
+      <p><em>${cat}</em></p>
+      <p>${desc}</p>
+      <a href="${place.data.link || '#'}" target="_blank">Website</a><br>
+      ${place.data.img ? `<img src="${place.data.img}" alt="${name}">` : ""}
+    `;
+    item.addEventListener("click", () => { selectPlace(place); });
     listDiv.appendChild(item);
 
-    place.marker.on("click",()=>{selectPlace(place);});
-    visibleCount++;
+    place.marker.on("click", () => { selectPlace(place); });
   });
 
-  updateListCount(visibleCount);
+  // zorg dat lijst en teller gefilterd worden naar zichtbare markers
+  filterListByMapBounds();
 }
 
-function selectPlace(place){
-  if(activeMarker) activeMarker.setIcon(icons[activeMarker.cat]);
-  if(activeItem) activeItem.style.backgroundColor="white";
+/* select / highlight a place: restore previous marker icon using stored _defaultIcon */
+function selectPlace(place) {
+  // zet vorige marker terug naar z'n eigen kleur
+  if (activeMarker) {
+    if (activeMarker._defaultIcon) activeMarker.setIcon(activeMarker._defaultIcon);
+    else activeMarker.setIcon(icons.camper);
+  }
+  if (activeItem) activeItem.style.backgroundColor = "white";
 
+  // highlight nieuwe
   activeMarker = place.marker;
   activeMarker.setIcon(highlightIcon);
 
-  activeItem = document.getElementById("place-"+place.index);
-  if(activeItem){
-    activeItem.style.backgroundColor="#fffa90";
-    activeItem.scrollIntoView({behavior:"smooth", block:"center"});
+  activeItem = document.getElementById("place-" + place.index);
+  if (activeItem) {
+    activeItem.style.backgroundColor = "#fffa90";
+    activeItem.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 }
 
-// Update lijst bij zoom/pan
-map.on("moveend", filterListByMapBounds);
-function filterListByMapBounds(){
+/* filter lijst naar markers zichtbaar in huidige kaartbounds en update teller */
+function filterListByMapBounds() {
   const bounds = map.getBounds();
-  let visibleCount=0;
-  allPlaces.forEach(place=>{
-    const item=document.getElementById("place-"+place.index);
-    if(!item) return;
-    if(markersCluster.hasLayer(place.marker) && bounds.contains([place.lat,place.lon])){
-      item.style.display="block";
+  let visibleCount = 0;
+
+  allPlaces.forEach(place => {
+    const item = document.getElementById("place-" + place.index);
+    if (!item) return;
+
+    if (map.hasLayer(place.marker) && bounds.contains([place.lat, place.lon])) {
+      item.style.display = "block";
       visibleCount++;
-    } else item.style.display="none";
+    } else {
+      item.style.display = "none";
+    }
   });
-  updateListCount(visibleCount);
+
+  document.getElementById("list-count").textContent = visibleCount + " plek" + (visibleCount === 1 ? "" : "ken") + " gevonden";
 }
 
-function updateListCount(count){
-  document.getElementById("list-count").textContent=count+" plek"+(count===1?'':'ken')+" gevonden";
-}
+/* filters en zoek */
+document.querySelectorAll('.filters input[type=checkbox]').forEach(cb => {
+  cb.addEventListener('change', () => {
+    let cat = cb.value;
+    if (cb.checked) {
+      if (!activeCategories.includes(cat)) activeCategories.push(cat);
+    } else {
+      activeCategories = activeCategories.filter(c => c !== cat);
+    }
+    // zet eventuele highlight terug naar kleur (voorkomt 'geel blijft' issues)
+    if (activeMarker && activeMarker._defaultIcon) activeMarker.setIcon(activeMarker._defaultIcon);
+    activeMarker = null;
+    if (activeItem) { activeItem.style.backgroundColor = "white"; activeItem = null; }
 
-// Filters
-document.querySelectorAll('.filters input[type=checkbox]').forEach(cb=>{
-  cb.addEventListener('change',()=>{
-    let cat=cb.value;
-    if(cb.checked){
-      if(!activeCategories.includes(cat)) activeCategories.push(cat);
-    } else activeCategories=activeCategories.filter(c=>c!==cat);
     renderPlaces();
   });
 });
 
-// Search
-document.getElementById("search").addEventListener("input",e=>{
-  searchQuery=e.target.value;
+document.getElementById("search").addEventListener("input", e => {
+  searchQuery = e.target.value;
   renderPlaces();
 });
 
-// Reset knop
-document.getElementById("reset").addEventListener("click",()=>{
-  activeCategories=["camper","eten","natuur"];
-  document.querySelectorAll('.filters input[type=checkbox]').forEach(cb=>cb.checked=true);
-  searchQuery="";
-  document.getElementById("search").value="";
-  if(activeMarker){activeMarker.setIcon(icons[activeMarker.cat]); activeMarker=null;}
-  if(activeItem){activeItem.style.backgroundColor="white"; activeItem=null;}
+/* reset knop: reset filters/zoek en zoom naar alle markers */
+document.getElementById("reset").addEventListener("click", () => {
+  activeCategories = ["camper", "eten", "natuur"];
+  document.querySelectorAll('.filters input[type=checkbox]').forEach(cb => cb.checked = true);
+  searchQuery = "";
+  document.getElementById("search").value = "";
+
+  // restore eventuele highlight
+  if (activeMarker && activeMarker._defaultIcon) activeMarker.setIcon(activeMarker._defaultIcon);
+  activeMarker = null;
+  if (activeItem) { activeItem.style.backgroundColor = "white"; activeItem = null; }
+
   renderPlaces();
-  map.fitBounds(markersCluster.getBounds());
+  zoomToAll();
 });
 
-// Plaats zoeken onder de kaart
-document.getElementById("goPlace").addEventListener("click",goToPlace);
-document.getElementById("place").addEventListener("keypress",e=>{
-  if(e.key==="Enter"){e.preventDefault(); goToPlace();}
+/* plaats zoeken (onder de kaart) — Enter werkt ook */
+document.getElementById("goPlace").addEventListener("click", goToPlace);
+document.getElementById("place").addEventListener("keypress", e => {
+  if (e.key === "Enter") { e.preventDefault(); goToPlace(); }
 });
-function goToPlace(){
-  const placeName=document.getElementById("place").value.trim();
-  if(!placeName){alert("Vul een plaatsnaam in");return;}
+function goToPlace() {
+  const placeName = document.getElementById("place").value.trim();
+  if (!placeName) { alert("Vul een plaatsnaam in"); return; }
+
   fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(placeName)}`)
-    .then(res=>res.json())
-    .then(data=>{
-      if(!data||data.length===0){alert("Plaats niet gevonden");return;}
-      const lat=parseFloat(data[0].lat);
-      const lon=parseFloat(data[0].lon);
-      const latOffset=25/111;
-      const lonOffset=25/(111*Math.cos(lat*Math.PI/180));
-      map.fitBounds([[lat-latOffset,lon-lonOffset],[lat+latOffset,lon+lonOffset]]);
-    }).catch(err=>{console.error(err); alert("Fout bij ophalen locatie");});
+    .then(res => res.json())
+    .then(data => {
+      if (!data || data.length === 0) { alert("Plaats niet gevonden"); return; }
+      const lat = parseFloat(data[0].lat);
+      const lon = parseFloat(data[0].lon);
+      const latOffset = 25 / 111;
+      const lonOffset = 25 / (111 * Math.cos(lat * Math.PI/180));
+      map.fitBounds([[lat - latOffset, lon - lonOffset], [lat + latOffset, lon + lonOffset]]);
+    })
+    .catch(err => { console.error(err); alert("Fout bij ophalen locatie"); });
 }
+
+/* zoom naar alle markers die op de kaart aanwezig zijn */
+function zoomToAll() {
+  const visibleMarkers = allPlaces.filter(p => map.hasLayer(p.marker)).map(p => p.marker);
+  if (visibleMarkers.length === 0) return;
+  if (visibleMarkers.length === 1) { map.setView(visibleMarkers[0].getLatLng(), 13); return; }
+  const group = L.featureGroup(visibleMarkers);
+  map.fitBounds(group.getBounds().pad(0.1));
+}
+
+/* update lijst bij pan/zoom */
+map.on("moveend", filterListByMapBounds);
 </script>
 </body>
 </html>
+
+
 
