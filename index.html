@@ -6,13 +6,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-
-
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css"/>
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css"/>
-
-  
-  
 <style>
 body {
   font-family: Arial, sans-serif;
@@ -176,7 +169,7 @@ h2 { padding: 10px; margin: 0; }
 </style>
 </head>
 <body>
-<h2>Kaart met bezienswaardigheden! CLUSTERED</h2>
+<h2>Kaart met bezienswaardigheden!</h2>
 
 <div class="filters">
   <div class="filter-cats">
@@ -211,11 +204,6 @@ h2 { padding: 10px; margin: 0; }
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://unpkg.com/papaparse@5.3.2/papaparse.min.js"></script>
-
-
-<script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
-
-  
 <script>
 /* kaart init */
 var map = L.map('map').setView([52.1, 5.3], 7);
@@ -257,12 +245,7 @@ var highlightIcon = L.icon({
 var activeMarker = null;
 var activeItem = null;
 
-
-/* cluster groep aanmaken */
-var markersCluster = L.markerClusterGroup();
-map.addLayer(markersCluster);
-
-/* CSV inladen en markers aanmaken */
+/* CSV inladen en markers aanmaken (slaat default icon + cat op in marker) */
 Papa.parse("plekken.csv", {
   download: true,
   header: true,
@@ -272,10 +255,12 @@ Papa.parse("plekken.csv", {
       var lon = parseFloat(p.lon);
       if (isNaN(lat) || isNaN(lon)) return;
 
+      // categorie (zeker in lowercase voor mapping)
       var cat = (p.cat || "camper").toLowerCase();
       var icon = icons[cat] || icons.camper;
 
       var marker = L.marker([lat, lon], { icon: icon });
+      // sla default icon en categorie op in marker (zodat we later correct kunnen resetten)
       marker._defaultIcon = icon;
       marker._cat = cat;
 
@@ -286,8 +271,6 @@ Papa.parse("plekken.csv", {
   }
 });
 
-
-  
 /* render lijst + markers (wordt gebruikt bij filters/search/reset) */
 function renderPlaces() {
   var listDiv = document.getElementById("list");
@@ -312,8 +295,8 @@ function renderPlaces() {
     }
 
     // voeg marker toe als nog niet aanwezig
-    if (!markersCluster.hasLayer(place.marker)) {
-      markersCluster.addLayer(place.marker);
+    if (!map.hasLayer(place.marker)) {
+      place.marker.addTo(map);
     }
 
     var item = document.createElement("div");
@@ -439,20 +422,17 @@ function goToPlace() {
 
 /* zoom naar alle markers die op de kaart aanwezig zijn */
 function zoomToAll() {
-  const visibleMarkers = allPlaces.filter(p => markersCluster.hasLayer(p.marker)).map(p => p.marker);
+  const visibleMarkers = allPlaces.filter(p => map.hasLayer(p.marker)).map(p => p.marker);
   if (visibleMarkers.length === 0) return;
   if (visibleMarkers.length === 1) { map.setView(visibleMarkers[0].getLatLng(), 13); return; }
   const group = L.featureGroup(visibleMarkers);
   map.fitBounds(group.getBounds().pad(0.1));
 }
 
-  
 /* update lijst bij pan/zoom */
 map.on("moveend", filterListByMapBounds);
 </script>
 </body>
 </html>
-
-
 
 
