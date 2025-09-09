@@ -7,6 +7,8 @@
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 <style>
+/* ... jouw bestaande CSS (om ruimte te besparen niet herhaald) ... */
+/* (Plak hier exact jouw CSS uit je originele file) */
 body {
   font-family: Arial, sans-serif;
   margin: 0;
@@ -15,135 +17,30 @@ body {
   flex-direction: column;
   height: 100vh;
 }
-
 h2 { padding: 10px; margin: 0; }
-
-.filters {
-  position: sticky;
-  top: 0;
-  background: #f7f7f7;
-  border-bottom: 1px solid #ccc;
-  padding: 10px 15px;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  z-index: 1000;
-}
-
-.filter-cats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-.filters label { font-size: 14px; }
-
-.filter-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 5px;
-}
-.search-box input {
-  padding: 6px;
-  font-size: 14px;
-  border: 1px solid #aaa;
-  border-radius: 4px;
-  flex: 1;
-  min-width: 150px;
-}
-.reset-btn {
-  padding: 6px 10px;
-  font-size: 14px;
-  background: #0078d7;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.reset-btn:hover { background: #005fa3; }
-
-.main {
-  flex: 1;
-  display: flex;
-  min-height: 0;
-  gap: 1px;
-}
-
-#map { flex: 1; }
-
-#list-container {
-  width: 400px;
-  border-left: 1px solid #ccc;
-  background: #fafafa;
-  display: flex;
-  flex-direction: column;
-}
-
-#list-count {
-  font-weight: bold;
-  padding: 10px;
-  border-bottom: 1px solid #ddd;
-}
-
-#list {
-  flex: 1;
-  overflow-y: auto;
-  padding: 10px;
-}
-
-.place-item {
-  padding: 10px;
-  margin-bottom: 10px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  background: white;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.place-item:hover { background: #f0f8ff; }
-.place-item h4 { margin: 0 0 5px; font-size: 16px; }
-.place-item img { max-width: 100%; border-radius: 6px; margin-top: 5px; }
-
-#place-search {
-  position: sticky;
-  bottom: 0;
-  background: #f7f7f7;
-  border-top: 1px solid #ccc;
-  padding: 10px;
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  z-index: 1000;
-}
-#place-search input {
-  flex: 1;
-  padding: 6px;
-  font-size: 14px;
-  border: 1px solid #aaa;
-  border-radius: 4px;
-}
-
-@media (max-width: 900px) {
-  .main { flex-direction: column; }
-  #list-container {
-    width: 100%;
-    border-left: none;
-    border-top: 1px solid #ccc;
-    height: 40vh;
-    flex-shrink: 0;
-  }
-  #map { height: 60vh; flex: none; }
-  #place-search { flex-direction: column; }
-}
-@media (max-width: 500px) {
-  #list-container { height: 50vh; }
-  #map { height: 50vh; }
-}
+.filters { position: sticky; top: 0; background: #f7f7f7; border-bottom: 1px solid #ccc; padding: 10px 15px; display:flex; flex-direction:column; gap:5px; z-index:1000; }
+.filter-cats { display:flex; flex-wrap:wrap; gap:10px; } .filters label{font-size:14px;}
+.filter-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:5px;}
+.search-box input{padding:6px;font-size:14px;border:1px solid #aaa;border-radius:4px;flex:1;min-width:150px;}
+.reset-btn{padding:6px 10px;font-size:14px;background:#0078d7;color:white;border:none;border-radius:4px;cursor:pointer;transition:background 0.2s;}
+.reset-btn:hover{background:#005fa3;}
+.main{flex:1;display:flex;min-height:0;gap:1px;}
+#map{flex:1;}
+#list-container{width:400px;border-left:1px solid #ccc;background:#fafafa;display:flex;flex-direction:column;}
+#list-count{font-weight:bold;padding:10px;border-bottom:1px solid #ddd;}
+#list{flex:1;overflow-y:auto;padding:10px;}
+.place-item{padding:10px;margin-bottom:10px;border:1px solid #ddd;border-radius:8px;background:white;cursor:pointer;transition:background 0.2s;}
+.place-item:hover{background:#f0f8ff;}
+.place-item h4{margin:0 0 5px;font-size:16px;}
+.place-item img{max-width:100%;border-radius:6px;margin-top:5px;}
+#place-search{position:sticky;bottom:0;background:#f7f7f7;border-top:1px solid #ccc;padding:10px;display:flex;gap:10px;align-items:center;z-index:1000;}
+#place-search input{flex:1;padding:6px;font-size:14px;border:1px solid #aaa;border-radius:4px;}
+@media (max-width:900px){.main{flex-direction:column;}#list-container{width:100%;border-left:none;border-top:1px solid #ccc;height:40vh;flex-shrink:0;}#map{height:60vh;flex:none;}#place-search{flex-direction:column;}}
+@media (max-width:500px){#list-container{height:50vh;}#map{height:50vh;}}
 </style>
 </head>
 <body>
-<h2>Kaart met interessante plekken 🚐 UPDATE</h2>
+<h2>Kaart met CSV-plekken 🚐 UPDATE</h2>
 
 <div class="filters">
   <div class="filter-cats">
@@ -230,7 +127,6 @@ Papa.parse("plekken.csv", {
 
 function renderPlaces() {
   var listDiv = document.getElementById("list");
-  var countDiv = document.getElementById("list-count");
   listDiv.innerHTML = "";
   
   allPlaces.forEach(place => {
@@ -251,7 +147,10 @@ function renderPlaces() {
       return;
     }
 
-    place.marker.addTo(map);
+    // voeg marker toe aan kaart (indien nog niet)
+    if (!map.hasLayer(place.marker)) {
+      place.marker.addTo(map);
+    }
 
     var item = document.createElement("div");
     item.className = "place-item";
@@ -269,9 +168,11 @@ function renderPlaces() {
     place.marker.on("click", () => { selectPlace(place); });
   });
 
+  // Zorg dat lijst en teller gefilterd worden naar zichtbare markers
   filterListByMapBounds();
 }
 
+// Highlight / scroll
 function selectPlace(place) {
   if (activeMarker) activeMarker.setIcon(defaultIcon);
   if (activeItem) activeItem.style.backgroundColor = "white";
@@ -286,7 +187,30 @@ function selectPlace(place) {
   }
 }
 
-// ✅ Nieuwe functie: lijst filteren op zichtbare markers
+// --- DEFEINIE ZOOM-ALL FUNCTIE (ontbreekt in jouw versie) ---
+function zoomToAll() {
+  // Zoek alle markers die momenteel op de kaart staan
+  const visibleLatLngs = allPlaces
+    .filter(p => map.hasLayer(p.marker))
+    .map(p => p.marker.getLatLng());
+
+  if (visibleLatLngs.length === 0) {
+    // geen markers zichtbaar: niks doen of eventueel terug naar default view
+    return;
+  }
+
+  if (visibleLatLngs.length === 1) {
+    // 1 marker -> vaste zoom (beter dan fitBounds op 1 punt)
+    map.setView(visibleLatLngs[0], 13);
+    return;
+  }
+
+  // meerdere markers -> fitBounds
+  const bounds = L.latLngBounds(visibleLatLngs);
+  map.fitBounds(bounds, { padding: [40, 40] });
+}
+
+// Filter lijst naar wat binnen huidige kaart-bounds zichtbaar is
 function filterListByMapBounds() {
   const bounds = map.getBounds();
   let visibleCount = 0;
@@ -295,6 +219,7 @@ function filterListByMapBounds() {
     const item = document.getElementById("place-" + place.index);
     if (!item) return;
 
+    // toon alleen items waarvoor de marker op de kaart staat én binnen bounds ligt
     if (map.hasLayer(place.marker) && bounds.contains([place.lat, place.lon])) {
       item.style.display = "block";
       visibleCount++;
@@ -306,7 +231,7 @@ function filterListByMapBounds() {
   document.getElementById("list-count").textContent = visibleCount + " plek" + (visibleCount === 1 ? "" : "ken") + " gevonden";
 }
 
-// Filters en search
+// Filters en zoek
 document.querySelectorAll('.filters input[type=checkbox]').forEach(cb => {
   cb.addEventListener('change', () => {
     let cat = cb.value;
@@ -324,21 +249,23 @@ document.getElementById("search").addEventListener("input", e => {
   renderPlaces();
 });
 
+// Reset knop: reset filters en zoom naar alle zichtbare markers
 document.getElementById("reset").addEventListener("click", () => {
   activeCategories = ["camper", "eten", "natuur"];
   document.querySelectorAll('.filters input[type=checkbox]').forEach(cb => cb.checked = true);
   searchQuery = "";
   document.getElementById("search").value = "";
+
   if (activeMarker) { activeMarker.setIcon(defaultIcon); activeMarker = null; }
   if (activeItem) { activeItem.style.backgroundColor = "white"; activeItem = null; }
+
   renderPlaces();
 
-  // ✅ Zoom uit zodat alle zichtbare markers op de kaart passen
+  // Belangrijk: na renderPlaces() de kaart uitzoomen naar alle markers
   zoomToAll();
-  
 });
 
-// Zoekveld onder de kaart
+// Plaats-zoekveld (onder de kaart)
 document.getElementById("goPlace").addEventListener("click", goToPlace);
 document.getElementById("place").addEventListener("keypress", e => {
   if (e.key === "Enter") {
@@ -367,13 +294,8 @@ function goToPlace() {
     .catch(err => { console.error(err); alert("Fout bij ophalen locatie"); });
 }
 
-// Update lijst bij zoomen/pannen
+// Update lijst/teller bij zoomen/pannen
 map.on("moveend", filterListByMapBounds);
 </script>
 </body>
 </html>
-
-
-
-
-
