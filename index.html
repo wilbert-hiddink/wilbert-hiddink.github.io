@@ -332,6 +332,10 @@ document.getElementById("reset").addEventListener("click", () => {
   if (activeMarker) { activeMarker.setIcon(defaultIcon); activeMarker = null; }
   if (activeItem) { activeItem.style.backgroundColor = "white"; activeItem = null; }
   renderPlaces();
+
+  // ✅ Zoom uit zodat alle zichtbare markers op de kaart passen
+  zoomToAll();
+  
 });
 
 // Zoekveld onder de kaart
@@ -368,5 +372,6 @@ map.on("moveend", filterListByMapBounds);
 </script>
 </body>
 </html>
+
 
 
