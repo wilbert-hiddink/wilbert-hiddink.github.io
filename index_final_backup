@@ -7,39 +7,175 @@
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 <style>
-/* zelfde CSS als je vorige versie, niet veranderd */
-body { font-family: Arial, sans-serif; margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; }
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
 h2 { padding: 10px; margin: 0; }
-.filters { position: sticky; top: 0; background: #f7f7f7; border-bottom: 1px solid #ccc; padding: 10px 15px; display:flex; flex-direction:column; gap:5px; z-index:1000; }
-.filter-cats { display:flex; flex-wrap:wrap; gap:10px; }
-.filters label{font-size:14px;}
-.filter-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:5px;}
-.search-box input{padding:6px;font-size:14px;border:1px solid #aaa;border-radius:4px;flex:1;min-width:150px;}
-.reset-btn{padding:6px 10px;font-size:14px;background:#0078d7;color:white;border:none;border-radius:4px;cursor:pointer;transition:background 0.2s;}
-.reset-btn:hover{background:#005fa3;}
-.main{flex:1;display:flex;min-height:0;gap:1px;}
-#map{flex:1;}
-#list-container{width:400px;border-left:1px solid #ccc;background:#fafafa;display:flex;flex-direction:column;}
-#list-count{font-weight:bold;padding:10px;border-bottom:1px solid #ddd;}
-#list{flex:1;overflow-y:auto;padding:10px;}
-.place-item{padding:10px;margin-bottom:10px;border:1px solid #ddd;border-radius:8px;background:white;cursor:pointer;transition:background 0.2s;}
-.place-item:hover{background:#f0f8ff;}
-.place-item h4{margin:0 0 5px;font-size:16px;}
-.place-item img{max-width:100%;border-radius:6px;margin-top:5px;}
-#place-search{position:sticky;bottom:0;background:#f7f7f7;border-top:1px solid #ccc;padding:10px;display:flex;gap:10px;align-items:center;z-index:1000;}
-#place-search input{flex:1;padding:6px;font-size:14px;border:1px solid #aaa;border-radius:4px;}
-@media (max-width:900px){.main{flex-direction:column;}#list-container{width:100%;border-left:none;border-top:1px solid #ccc;height:40vh;flex-shrink:0;}#map{height:60vh;flex:none;}#place-search{flex-direction:column;}}
-@media (max-width:500px){#list-container{height:50vh;}#map{height:50vh;}}
+
+.filters {
+  position: sticky;
+  top: 0;
+  background: #f7f7f7;
+  border-bottom: 1px solid #ccc;
+  padding: 10px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  z-index: 1000;
+}
+
+.filter-cats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Verborgen checkbox */
+.filter-cats input[type="checkbox"] {
+  display: none;
+}
+.filter-cats label {
+  cursor: pointer;
+}
+.filter-cats label span {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  color: white;
+  transition: background 0.2s;
+}
+
+/* Kleuren per categorie (als checked) */
+.filter-cats input[value="camper"]:checked + span { background: #1E90FF; } /* blauw */
+.filter-cats input[value="eten"]:checked + span { background: #E53935; } /* rood */
+.filter-cats input[value="natuur"]:checked + span { background: #43A047; } /* groen */
+
+/* Uitgevinkt = grijs */
+.filter-cats input:not(:checked) + span {
+  background: #ccc;
+  color: #333;
+}
+
+.filter-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 5px;
+}
+.search-box input {
+  padding: 6px;
+  font-size: 14px;
+  border: 1px solid #aaa;
+  border-radius: 4px;
+  flex: 1;
+  min-width: 150px;
+}
+.reset-btn {
+  padding: 6px 10px;
+  font-size: 14px;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.reset-btn:hover { background: #5a6268; }
+
+.main {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  gap: 1px;
+}
+
+#map { flex: 1; }
+
+#list-container {
+  width: 35%;
+  border-left: 1px solid #ccc;
+  background: #fafafa;
+  display: flex;
+  flex-direction: column;
+}
+
+#list-count {
+  font-weight: bold;
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+#list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+}
+
+.place-item {
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.place-item:hover { background: #f0f8ff; }
+.place-item h4 { margin: 0 0 5px; font-size: 16px; }
+.place-item img { max-width: 100%; border-radius: 6px; margin-top: 5px; }
+
+#place-search {
+  position: sticky;
+  bottom: 0;
+  background: #f7f7f7;
+  border-top: 1px solid #ccc;
+  padding: 10px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  z-index: 1000;
+}
+#place-search input {
+  flex: 1;
+  padding: 6px;
+  font-size: 14px;
+  border: 1px solid #aaa;
+  border-radius: 4px;
+}
+
+@media (max-width: 900px) {
+  .main { flex-direction: column; }
+  #list-container {
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid #ccc;
+    height: 40vh;
+    flex-shrink: 0;
+  }
+  #map { height: 60vh; flex: none; }
+  #place-search { flex-direction: column; }
+}
+@media (max-width: 500px) {
+  #list-container { height: 50vh; }
+  #map { height: 50vh; }
+}
 </style>
 </head>
 <body>
-<h2>Kaart met interessante plekken 🚐 Kleuren per categorie</h2>
+<h2>Kaart met CSV-plekken — 35%</h2>
 
 <div class="filters">
   <div class="filter-cats">
-    <label><input type="checkbox" value="camper" checked> Camperplaatsen</label>
-    <label><input type="checkbox" value="eten" checked> Restaurants</label>
-    <label><input type="checkbox" value="natuur" checked> Natuur</label>
+    <label><input type="checkbox" value="camper" checked><span>Camperplaatsen</span></label>
+    <label><input type="checkbox" value="eten" checked><span>Restaurants</span></label>
+    <label><input type="checkbox" value="natuur" checked><span>Natuur</span></label>
   </div>
   <div class="filter-actions">
     <div class="search-box">
@@ -69,8 +205,8 @@ h2 { padding: 10px; margin: 0; }
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://unpkg.com/papaparse@5.3.2/papaparse.min.js"></script>
 <script>
+/* kaart init */
 var map = L.map('map').setView([52.1, 5.3], 7);
-
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 19,
   attribution: '© OpenStreetMap'
@@ -80,8 +216,8 @@ var allPlaces = [];
 var activeCategories = ["camper", "eten", "natuur"];
 var searchQuery = "";
 
-// ✅ Verschillende icons per categorie
-const icons = {
+/* icons per categorie */
+var icons = {
   camper: L.icon({
     iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
     shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
@@ -99,19 +235,17 @@ const icons = {
   })
 };
 
-// Highlight icon (geel)
+/* highlight icon */
 var highlightIcon = L.icon({
   iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-yellow.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
+  iconSize: [25,41], iconAnchor:[12,41], popupAnchor:[1,-34], shadowSize:[41,41]
 });
 
 var activeMarker = null;
 var activeItem = null;
 
+/* CSV inladen en markers aanmaken (slaat default icon + cat op in marker) */
 Papa.parse("plekken.csv", {
   download: true,
   header: true,
@@ -121,39 +255,46 @@ Papa.parse("plekken.csv", {
       var lon = parseFloat(p.lon);
       if (isNaN(lat) || isNaN(lon)) return;
 
-      let cat = (p.cat || "").toLowerCase();
-      let icon = icons[cat] || icons.camper; // fallback = blauw
-      var marker = L.marker([lat, lon], { icon: icon });
+      // categorie (zeker in lowercase voor mapping)
+      var cat = (p.cat || "camper").toLowerCase();
+      var icon = icons[cat] || icons.camper;
 
-      allPlaces.push({ data: p, marker: marker, lat: lat, lon: lon, index: index, defaultIcon: icon });
+      var marker = L.marker([lat, lon], { icon: icon });
+      // sla default icon en categorie op in marker (zodat we later correct kunnen resetten)
+      marker._defaultIcon = icon;
+      marker._cat = cat;
+
+      allPlaces.push({ data: p, marker: marker, lat: lat, lon: lon, index: index, cat: cat });
     });
 
     renderPlaces();
   }
 });
 
+/* render lijst + markers (wordt gebruikt bij filters/search/reset) */
 function renderPlaces() {
   var listDiv = document.getElementById("list");
   listDiv.innerHTML = "";
-  
+
   allPlaces.forEach(place => {
-    let cat = place.data.cat || "";
+    let cat = place.cat;
     let name = place.data.name || "";
     let desc = place.data.desc || "";
 
-    // Categorie filter
+    // categorie filter
     if (!activeCategories.includes(cat)) {
-      map.removeLayer(place.marker);
+      if (map.hasLayer(place.marker)) map.removeLayer(place.marker);
       return;
     }
 
-    // Zoek filter
+    // zoek filter
     let searchText = (name + " " + desc).toLowerCase();
     if (searchQuery && !searchText.includes(searchQuery.toLowerCase())) {
-      map.removeLayer(place.marker);
+      if (map.hasLayer(place.marker)) map.removeLayer(place.marker);
       return;
     }
 
+    // voeg marker toe als nog niet aanwezig
     if (!map.hasLayer(place.marker)) {
       place.marker.addTo(map);
     }
@@ -165,7 +306,7 @@ function renderPlaces() {
       <h4>${name}</h4>
       <p><em>${cat}</em></p>
       <p>${desc}</p>
-      <a href="${place.data.link}" target="_blank">Website</a><br>
+      <a href="${place.data.link || '#'}" target="_blank">Website</a><br>
       ${place.data.img ? `<img src="${place.data.img}" alt="${name}">` : ""}
     `;
     item.addEventListener("click", () => { selectPlace(place); });
@@ -174,13 +315,20 @@ function renderPlaces() {
     place.marker.on("click", () => { selectPlace(place); });
   });
 
+  // zorg dat lijst en teller gefilterd worden naar zichtbare markers
   filterListByMapBounds();
 }
 
+/* select / highlight a place: restore previous marker icon using stored _defaultIcon */
 function selectPlace(place) {
-  if (activeMarker) activeMarker.setIcon(activeMarker.defaultIcon);
+  // zet vorige marker terug naar z'n eigen kleur
+  if (activeMarker) {
+    if (activeMarker._defaultIcon) activeMarker.setIcon(activeMarker._defaultIcon);
+    else activeMarker.setIcon(icons.camper);
+  }
   if (activeItem) activeItem.style.backgroundColor = "white";
 
+  // highlight nieuwe
   activeMarker = place.marker;
   activeMarker.setIcon(highlightIcon);
 
@@ -191,15 +339,7 @@ function selectPlace(place) {
   }
 }
 
-// zoomToAll (zelfde als eerder)
-function zoomToAll() {
-  const visibleLatLngs = allPlaces.filter(p => map.hasLayer(p.marker)).map(p => p.marker.getLatLng());
-  if (visibleLatLngs.length === 0) return;
-  if (visibleLatLngs.length === 1) { map.setView(visibleLatLngs[0], 13); return; }
-  const bounds = L.latLngBounds(visibleLatLngs);
-  map.fitBounds(bounds, { padding: [40, 40] });
-}
-
+/* filter lijst naar markers zichtbaar in huidige kaartbounds en update teller */
 function filterListByMapBounds() {
   const bounds = map.getBounds();
   let visibleCount = 0;
@@ -207,6 +347,7 @@ function filterListByMapBounds() {
   allPlaces.forEach(place => {
     const item = document.getElementById("place-" + place.index);
     if (!item) return;
+
     if (map.hasLayer(place.marker) && bounds.contains([place.lat, place.lon])) {
       item.style.display = "block";
       visibleCount++;
@@ -218,7 +359,7 @@ function filterListByMapBounds() {
   document.getElementById("list-count").textContent = visibleCount + " plek" + (visibleCount === 1 ? "" : "ken") + " gevonden";
 }
 
-// filters
+/* filters en zoek */
 document.querySelectorAll('.filters input[type=checkbox]').forEach(cb => {
   cb.addEventListener('change', () => {
     let cat = cb.value;
@@ -227,6 +368,11 @@ document.querySelectorAll('.filters input[type=checkbox]').forEach(cb => {
     } else {
       activeCategories = activeCategories.filter(c => c !== cat);
     }
+    // zet eventuele highlight terug naar kleur (voorkomt 'geel blijft' issues)
+    if (activeMarker && activeMarker._defaultIcon) activeMarker.setIcon(activeMarker._defaultIcon);
+    activeMarker = null;
+    if (activeItem) { activeItem.style.backgroundColor = "white"; activeItem = null; }
+
     renderPlaces();
   });
 });
@@ -236,25 +382,27 @@ document.getElementById("search").addEventListener("input", e => {
   renderPlaces();
 });
 
+/* reset knop: reset filters/zoek en zoom naar alle markers */
 document.getElementById("reset").addEventListener("click", () => {
   activeCategories = ["camper", "eten", "natuur"];
   document.querySelectorAll('.filters input[type=checkbox]').forEach(cb => cb.checked = true);
   searchQuery = "";
   document.getElementById("search").value = "";
 
-  if (activeMarker) { activeMarker.setIcon(activeMarker.defaultIcon); activeMarker = null; }
+  // restore eventuele highlight
+  if (activeMarker && activeMarker._defaultIcon) activeMarker.setIcon(activeMarker._defaultIcon);
+  activeMarker = null;
   if (activeItem) { activeItem.style.backgroundColor = "white"; activeItem = null; }
 
   renderPlaces();
   zoomToAll();
 });
 
-// plaats zoeken
+/* plaats zoeken (onder de kaart) — Enter werkt ook */
 document.getElementById("goPlace").addEventListener("click", goToPlace);
 document.getElementById("place").addEventListener("keypress", e => {
   if (e.key === "Enter") { e.preventDefault(); goToPlace(); }
 });
-
 function goToPlace() {
   const placeName = document.getElementById("place").value.trim();
   if (!placeName) { alert("Vul een plaatsnaam in"); return; }
@@ -272,6 +420,16 @@ function goToPlace() {
     .catch(err => { console.error(err); alert("Fout bij ophalen locatie"); });
 }
 
+/* zoom naar alle markers die op de kaart aanwezig zijn */
+function zoomToAll() {
+  const visibleMarkers = allPlaces.filter(p => map.hasLayer(p.marker)).map(p => p.marker);
+  if (visibleMarkers.length === 0) return;
+  if (visibleMarkers.length === 1) { map.setView(visibleMarkers[0].getLatLng(), 13); return; }
+  const group = L.featureGroup(visibleMarkers);
+  map.fitBounds(group.getBounds().pad(0.1));
+}
+
+/* update lijst bij pan/zoom */
 map.on("moveend", filterListByMapBounds);
 </script>
 </body>
