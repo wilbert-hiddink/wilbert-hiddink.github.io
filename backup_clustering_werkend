@@ -6,15 +6,28 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css"/>
 <style>
+
+
 body {
   font-family: Arial, sans-serif;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100dvh; /* dynamic viewport, werkt beter op mobiel */
+  overflow: hidden; /* voorkomt scrollen buiten frame */
 }
+
+.main {
+  flex: 1;
+  display: flex;
+  min-height: 0; /* voorkomt dat flex-kinderen teveel hoogte pakken */
+  gap: 1px;
+}
+
 
 h2 { padding: 10px; margin: 0; }
 
@@ -156,10 +169,10 @@ h2 { padding: 10px; margin: 0; }
     width: 100%;
     border-left: none;
     border-top: 1px solid #ccc;
-    height: 50vh;
+    height: 55vh;
     flex-shrink: 0;
   }
-  #map { height: 50vh; flex: none; }
+  #map { height: 45vh; flex: none; }
   #place-search { flex-direction: column; }
 }
 @media (max-width: 500px) {
@@ -169,7 +182,7 @@ h2 { padding: 10px; margin: 0; }
 </style>
 </head>
 <body>
-<h2>Kaart met bezienswaardigheden!</h2>
+<h2>Kaart met bezienswaardigheden! kashgf</h2>
 
 <div class="filters">
   <div class="filter-cats">
@@ -203,6 +216,7 @@ h2 { padding: 10px; margin: 0; }
 </div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
 <script src="https://unpkg.com/papaparse@5.3.2/papaparse.min.js"></script>
 <script>
 /* kaart init */
@@ -211,6 +225,10 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 19,
   attribution: '© OpenStreetMap'
 }).addTo(map);
+
+/* clusterlaag */
+var markerCluster = L.markerClusterGroup();
+map.addLayer(markerCluster);
 
 var allPlaces = [];
 var activeCategories = ["camper", "eten", "natuur"];
@@ -245,7 +263,7 @@ var highlightIcon = L.icon({
 var activeMarker = null;
 var activeItem = null;
 
-/* CSV inladen en markers aanmaken (slaat default icon + cat op in marker) */
+/* CSV inladen en markers aanmaken */
 Papa.parse("plekken.csv", {
   download: true,
   header: true,
@@ -255,12 +273,10 @@ Papa.parse("plekken.csv", {
       var lon = parseFloat(p.lon);
       if (isNaN(lat) || isNaN(lon)) return;
 
-      // categorie (zeker in lowercase voor mapping)
       var cat = (p.cat || "camper").toLowerCase();
       var icon = icons[cat] || icons.camper;
 
       var marker = L.marker([lat, lon], { icon: icon });
-      // sla default icon en categorie op in marker (zodat we later correct kunnen resetten)
       marker._defaultIcon = icon;
       marker._cat = cat;
 
@@ -271,33 +287,24 @@ Papa.parse("plekken.csv", {
   }
 });
 
-/* render lijst + markers (wordt gebruikt bij filters/search/reset) */
+/* render lijst + markers */
 function renderPlaces() {
   var listDiv = document.getElementById("list");
   listDiv.innerHTML = "";
+
+  markerCluster.clearLayers();
 
   allPlaces.forEach(place => {
     let cat = place.cat;
     let name = place.data.name || "";
     let desc = place.data.desc || "";
 
-    // categorie filter
-    if (!activeCategories.includes(cat)) {
-      if (map.hasLayer(place.marker)) map.removeLayer(place.marker);
-      return;
-    }
+    if (!activeCategories.includes(cat)) return;
 
-    // zoek filter
     let searchText = (name + " " + desc).toLowerCase();
-    if (searchQuery && !searchText.includes(searchQuery.toLowerCase())) {
-      if (map.hasLayer(place.marker)) map.removeLayer(place.marker);
-      return;
-    }
+    if (searchQuery && !searchText.includes(searchQuery.toLowerCase())) return;
 
-    // voeg marker toe als nog niet aanwezig
-    if (!map.hasLayer(place.marker)) {
-      place.marker.addTo(map);
-    }
+    markerCluster.addLayer(place.marker);
 
     var item = document.createElement("div");
     item.className = "place-item";
@@ -312,23 +319,21 @@ function renderPlaces() {
     item.addEventListener("click", () => { selectPlace(place); });
     listDiv.appendChild(item);
 
+    place.marker.off("click");
     place.marker.on("click", () => { selectPlace(place); });
   });
 
-  // zorg dat lijst en teller gefilterd worden naar zichtbare markers
   filterListByMapBounds();
 }
 
-/* select / highlight a place: restore previous marker icon using stored _defaultIcon */
+/* selecteer / highlight een marker */
 function selectPlace(place) {
-  // zet vorige marker terug naar z'n eigen kleur
   if (activeMarker) {
     if (activeMarker._defaultIcon) activeMarker.setIcon(activeMarker._defaultIcon);
     else activeMarker.setIcon(icons.camper);
   }
   if (activeItem) activeItem.style.backgroundColor = "white";
 
-  // highlight nieuwe
   activeMarker = place.marker;
   activeMarker.setIcon(highlightIcon);
 
@@ -339,7 +344,7 @@ function selectPlace(place) {
   }
 }
 
-/* filter lijst naar markers zichtbaar in huidige kaartbounds en update teller */
+/* filter lijst naar zichtbare markers */
 function filterListByMapBounds() {
   const bounds = map.getBounds();
   let visibleCount = 0;
@@ -348,7 +353,7 @@ function filterListByMapBounds() {
     const item = document.getElementById("place-" + place.index);
     if (!item) return;
 
-    if (map.hasLayer(place.marker) && bounds.contains([place.lat, place.lon])) {
+    if (markerCluster.hasLayer(place.marker) && bounds.contains([place.lat, place.lon])) {
       item.style.display = "block";
       visibleCount++;
     } else {
@@ -356,7 +361,8 @@ function filterListByMapBounds() {
     }
   });
 
-  document.getElementById("list-count").textContent = visibleCount + " plek" + (visibleCount === 1 ? "" : "ken") + " gevonden";
+  document.getElementById("list-count").textContent =
+    visibleCount + " plek" + (visibleCount === 1 ? "" : "ken") + " gevonden";
 }
 
 /* filters en zoek */
@@ -368,7 +374,7 @@ document.querySelectorAll('.filters input[type=checkbox]').forEach(cb => {
     } else {
       activeCategories = activeCategories.filter(c => c !== cat);
     }
-    // zet eventuele highlight terug naar kleur (voorkomt 'geel blijft' issues)
+
     if (activeMarker && activeMarker._defaultIcon) activeMarker.setIcon(activeMarker._defaultIcon);
     activeMarker = null;
     if (activeItem) { activeItem.style.backgroundColor = "white"; activeItem = null; }
@@ -382,14 +388,13 @@ document.getElementById("search").addEventListener("input", e => {
   renderPlaces();
 });
 
-/* reset knop: reset filters/zoek en zoom naar alle markers */
+/* reset knop */
 document.getElementById("reset").addEventListener("click", () => {
   activeCategories = ["camper", "eten", "natuur"];
   document.querySelectorAll('.filters input[type=checkbox]').forEach(cb => cb.checked = true);
   searchQuery = "";
   document.getElementById("search").value = "";
 
-  // restore eventuele highlight
   if (activeMarker && activeMarker._defaultIcon) activeMarker.setIcon(activeMarker._defaultIcon);
   activeMarker = null;
   if (activeItem) { activeItem.style.backgroundColor = "white"; activeItem = null; }
@@ -398,7 +403,7 @@ document.getElementById("reset").addEventListener("click", () => {
   zoomToAll();
 });
 
-/* plaats zoeken (onder de kaart) — Enter werkt ook */
+/* plaats zoeken */
 document.getElementById("goPlace").addEventListener("click", goToPlace);
 document.getElementById("place").addEventListener("keypress", e => {
   if (e.key === "Enter") { e.preventDefault(); goToPlace(); }
@@ -420,9 +425,9 @@ function goToPlace() {
     .catch(err => { console.error(err); alert("Fout bij ophalen locatie"); });
 }
 
-/* zoom naar alle markers die op de kaart aanwezig zijn */
+/* zoom naar alle zichtbare markers */
 function zoomToAll() {
-  const visibleMarkers = allPlaces.filter(p => map.hasLayer(p.marker)).map(p => p.marker);
+  const visibleMarkers = allPlaces.filter(p => markerCluster.hasLayer(p.marker)).map(p => p.marker);
   if (visibleMarkers.length === 0) return;
   if (visibleMarkers.length === 1) { map.setView(visibleMarkers[0].getLatLng(), 13); return; }
   const group = L.featureGroup(visibleMarkers);
@@ -434,4 +439,5 @@ map.on("moveend", filterListByMapBounds);
 </script>
 </body>
 </html>
+
 
