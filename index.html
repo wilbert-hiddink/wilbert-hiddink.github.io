@@ -13,17 +13,8 @@ body {
   padding: 0;
   display: flex;
   flex-direction: column;
-  height: 100dvh; /* dynamic viewport, werkt beter op mobiel */
-  overflow: hidden; /* voorkomt scrollen buiten frame */
+  height: 100vh;
 }
-
-.main {
-  flex: 1;
-  display: flex;
-  min-height: 0; /* voorkomt dat flex-kinderen teveel hoogte pakken */
-  gap: 1px;
-}
-
 
 h2 { padding: 10px; margin: 0; }
 
@@ -165,10 +156,10 @@ h2 { padding: 10px; margin: 0; }
     width: 100%;
     border-left: none;
     border-top: 1px solid #ccc;
-    height: 55vh;
+    height: 50vh;
     flex-shrink: 0;
   }
-  #map { height: 45vh; flex: none; }
+  #map { height: 50vh; flex: none; }
   #place-search { flex-direction: column; }
 }
 @media (max-width: 500px) {
@@ -178,7 +169,7 @@ h2 { padding: 10px; margin: 0; }
 </style>
 </head>
 <body>
-<h2>Kaart met bezienswaardigheden! check</h2>
+<h2>Kaart met bezienswaardigheden! cluster</h2>
 
 <div class="filters">
   <div class="filter-cats">
@@ -443,3 +434,4 @@ map.on("moveend", filterListByMapBounds);
 </script>
 </body>
 </html>
+
