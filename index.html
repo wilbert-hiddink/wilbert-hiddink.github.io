@@ -168,12 +168,16 @@ h2 { padding: 10px; margin: 0; }
     width: 100%;
     border-left: none;
     border-top: 1px solid #ccc;
-    height: 60vh;
-    flex-shrink: 0;
+    flex: 1;              /* neemt 1 deel */
+    height: auto;         /* laat flex bepalen */
   }
-  #map { height: 40vh; flex: none; }
+  #map {
+    flex: 2;              /* neemt 2 delen */
+    height: auto;         /* laat flex bepalen */
+  }
   #place-search { flex-direction: column; }
 }
+
 @media (max-width: 500px) {
   #list-container { height: 50vh; }
   #map { height: 50vh; }
@@ -181,7 +185,7 @@ h2 { padding: 10px; margin: 0; }
 </style>
 </head>
 <body>
-<h2>Kaart met bezienswaardigheden! aangepast</h2>
+<h2>Kaart met bezienswaardigheden! flex</h2>
 
 <div class="filters">
   <div class="filter-cats">
@@ -438,6 +442,7 @@ map.on("moveend", filterListByMapBounds);
 </script>
 </body>
 </html>
+
 
 
 
