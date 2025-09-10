@@ -9,14 +9,25 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css"/>
 <style>
+
+
 body {
   font-family: Arial, sans-serif;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100dvh; /* dynamic viewport, werkt beter op mobiel */
+  overflow: hidden; /* voorkomt scrollen buiten frame */
 }
+
+.main {
+  flex: 1;
+  display: flex;
+  min-height: 0; /* voorkomt dat flex-kinderen teveel hoogte pakken */
+  gap: 1px;
+}
+
 
 h2 { padding: 10px; margin: 0; }
 
@@ -158,10 +169,10 @@ h2 { padding: 10px; margin: 0; }
     width: 100%;
     border-left: none;
     border-top: 1px solid #ccc;
-    height: 50vh;
+    height: 55vh;
     flex-shrink: 0;
   }
-  #map { height: 50vh; flex: none; }
+  #map { height: 45vh; flex: none; }
   #place-search { flex-direction: column; }
 }
 @media (max-width: 500px) {
@@ -171,7 +182,7 @@ h2 { padding: 10px; margin: 0; }
 </style>
 </head>
 <body>
-<h2>Kaart met bezienswaardigheden! clustering</h2>
+<h2>Kaart met bezienswaardigheden! kashgf</h2>
 
 <div class="filters">
   <div class="filter-cats">
@@ -428,4 +439,5 @@ map.on("moveend", filterListByMapBounds);
 </script>
 </body>
 </html>
+
 
