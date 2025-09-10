@@ -183,7 +183,7 @@ h2 { padding: 10px; margin: 0; }
 </style>
 </head>
 <body>
-<h2>Kaart met bezienswaardigheden! yes</h2>
+<h2>Kaart met bezienswaardigheden! deze dan</h2>
 
 <div class="filters">
   <div class="filter-cats">
@@ -327,23 +327,43 @@ function renderPlaces() {
   filterListByMapBounds();
 }
 
-/* selecteer / highlight een marker */
+
+/* selecteer / highlight een marker (opent cluster als nodig) */
 function selectPlace(place) {
+  // zet vorige marker terug
   if (activeMarker) {
     if (activeMarker._defaultIcon) activeMarker.setIcon(activeMarker._defaultIcon);
     else activeMarker.setIcon(icons.camper);
   }
   if (activeItem) activeItem.style.backgroundColor = "white";
 
-  activeMarker = place.marker;
-  activeMarker.setIcon(highlightIcon);
-
+  // highlight lijst-item direct
   activeItem = document.getElementById("place-" + place.index);
   if (activeItem) {
     activeItem.style.backgroundColor = "#fffa90";
     activeItem.scrollIntoView({ behavior: "smooth", block: "center" });
   }
+
+  // zorg dat de marker zichtbaar wordt en highlight 'm wanneer zichtbaar
+  activeMarker = place.marker;
+
+  if (markerCluster.hasLayer(place.marker)) {
+    // opent het cluster en zorgt dat de marker zichtbaar is, daarna callback
+    markerCluster.zoomToShowLayer(place.marker, function() {
+      place.marker.setIcon(highlightIcon);
+      // pan naar marker zonder de zoom te forceren
+      map.panTo(place.marker.getLatLng());
+    });
+  } else {
+    // als marker niet door de clusterlaag wordt beheerd (edge-case)
+    if (!map.hasLayer(place.marker)) place.marker.addTo(map);
+    place.marker.setIcon(highlightIcon);
+    map.panTo(place.marker.getLatLng());
+  }
 }
+
+
+  
 
 /* filter lijst naar zichtbare markers */
 function filterListByMapBounds() {
@@ -440,6 +460,7 @@ map.on("moveend", filterListByMapBounds);
 </script>
 </body>
 </html>
+
 
 
 
